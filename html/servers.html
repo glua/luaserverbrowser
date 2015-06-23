@@ -1,0 +1,152 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+
+		<title>Garry's Mod Main Menu</title>
+
+		<!-- existing stuff -->
+		<link rel="stylesheet" type="text/css" href="../../../../html/css/menu/Menu.css" />
+		<link rel="stylesheet" type="text/css" href="../../../../html/css/menu/NewGame.css" />
+		
+		<script type="text/javascript" src="../../../../html/js/lua.js"></script>
+		
+		<script type="text/javascript" src="../../../../html/js/thirdparty/angular.js"></script>
+		
+		<link rel="stylesheet" type="text/css" href="style.css" />
+		
+		<script src="main.js"></script>
+	</head>
+	
+	<body ng-app="lsbApp">
+		<div class="maplist icons">
+
+			<div class="controls">
+			</div>
+
+			<div class="scrollable" style="margin: 0px; top: 0px; left: 200px">
+
+				<ul class="category" ng-repeat="category in MapList | orderBy:'order'" ng-hide="category.maps.length == 0" ng-show="CurrentCategory == category.category">
+				
+					<li>{{category.category}} <small>{{CountFiltered(category.maps)}} </small><small ng-tranny="category.maps.length == 1 && 'newgame_map' || 'newgame_maps'"></small></li>
+
+					<li class="icon mapicon {{MapClass( map )}}" ng-repeat="map in category.maps | orderBy:'toString()' | filter:SearchText" >
+						<img ng-click="FavMap( map )" class="{{FavMapClass( map )}} {{FavMapHover( map )}}" src="img/empty.png" />
+						<img ng-click="ClickMap( map )" ng-src="{{MapIcon( map, category.category )}}" class="thumbnail" /><br /> 
+						{{map}}
+					</li>
+
+				</ul>
+
+			</div>
+		</div>
+
+		<gamesettings>
+			<div class="scrollable" style="margin: 10px; bottom: 65px; top: 0px">
+				<ul>
+					<!-- <li>
+						<label>Region:</label>
+						<select>
+							<option value="0">U.S. East Coast</option>
+							<option value="1">U.S. West Coast</option>
+							<option value="2">South America</option>
+							<option value="3">Europe</option>
+							<option value="4">Asia</option>
+							<option value="5">Australia</option>
+							<option value="6">Middle East</option>
+							<option value="7">Africa</option>
+							<option value="255">Rest of the world</option>
+						</select>
+					</li> -->
+					
+					<div class="dropdown">
+
+						<div class="label" onclick="$(this).siblings('.contents').toggle()">
+							<span>Region</span>
+							<i class='caret'></i>
+						</div>
+						<div class="contents" onclick="$(this).hide()">
+							<div ng-repeat="ply in Players" ng-click="UpdateMaxPlayers( ply )" ng-tranny="ply.label">
+							{{ply.label}}
+							</div>
+						</div>
+					</div>
+
+					<li class="label">Generic stuff</li>
+					
+					<li>
+						<label>Dedicated</label>
+						<input type="checkbox"/>
+					</li>
+					<li>
+						<label>VAC</label>
+						<input type="checkbox"/>
+					</li>
+					<li>
+						<label>Server empty</label>
+						<input type="checkbox"/>
+					</li>
+					<li>
+						<label>Server has players</label>
+						<input type="checkbox"/>
+					</li>
+					<li>
+						<label>Server not full</label>
+						<input type="checkbox"/>
+					</li>
+					<li>
+						<label>Whitelisted</label>
+						<input type="checkbox"/>
+					</li>
+					
+					<li class="label">Specific stuff</li>
+
+					<li>
+						<label>Map</label>
+						<input type="text"/>
+					</li>
+					<li>
+						<label>Hostname</label>
+						<input type="text"/>
+					</li>
+					<li>
+						<label>IP Address</label>
+						<input type="text"/>
+					</li>
+					
+					<li class="label">Probably useless</li>
+
+					<li>
+						<label>Game directory</label>
+						<input type="text" value="garrysmod"/>
+					</li>
+					<li>
+						<label>Linux</label>
+						<input type="checkbox"/>
+					</li>
+					<li>
+						<label>Spectator server</label>
+						<input type="checkbox"/>
+					</li>
+					<li class="number">
+						<label>App ID</label>
+						<input type="text" value="4000"/>
+					</li>
+					<li class="number">
+						<label>Version</label>
+						<input type="text" value="15.04.03"/>
+					</li>
+					<li>
+						<label>Collapse multiples</label>
+						<input type="checkbox"/>
+					</li>
+				</ul>
+			</div>
+			
+			<bottom>
+				<button class='btn-primary' ng-click="StartGame()">Find Servers</button>
+			</bottom>
+
+		</gamesettings>
+	</body>
+</html>

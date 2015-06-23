@@ -1,0 +1,66 @@
+gamesettings h1 {
+	text-align:center;
+	font-weight:normal;
+	font-size:28px;
+	color:#444;
+}
+
+gamesettings .scrollable {
+	overflow-x:hidden;
+	overflow-y:auto;
+}
+
+gamesettings ul {
+	padding:0;
+	margin:0;
+}
+
+gamesettings ul li {
+	display:block;
+	list-style:none;
+	/* line-height:20px; */
+	margin-bottom:8px;
+}
+
+gamesettings li label, gamesettings li.label {
+	font-size: 11px;
+	color: #666;
+}
+
+gamesettings li.label {
+	text-align:center;
+	margin-top:16px;
+}
+
+gamesettings .dropdown {
+	margin-bottom:8px;
+}
+
+gamesettings input[type="checkbox"] {
+	position:relative;
+	top:2px;
+	float:right;
+	padding:2px;
+	margin:0;
+}
+
+gamesettings input[type="text"] {
+	-webkit-box-sizing:border-box;
+	width:100%;
+	padding:4px;
+}
+
+gamesettings li.number {
+	text-align:right;
+	line-height:26px;
+}
+
+gamesettings li.number label {
+	float:left;
+}
+
+gamesettings li.number input {
+	width:68px;
+	padding:2px;
+	height:20px;
+}
