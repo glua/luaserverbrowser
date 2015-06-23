@@ -6,19 +6,19 @@
 		<title>Garry's Mod Main Menu</title>
 
 		<!-- existing stuff -->
+		<script type="text/javascript" src="../../../../html/js/lua.js"></script>
+		<script type="text/javascript" src="../../../../html/js/thirdparty/angular.js"></script>
+		
 		<link rel="stylesheet" type="text/css" href="../../../../html/css/menu/Menu.css" />
 		<link rel="stylesheet" type="text/css" href="../../../../html/css/menu/NewGame.css" />
 		
-		<script type="text/javascript" src="../../../../html/js/lua.js"></script>
-		
-		<script type="text/javascript" src="../../../../html/js/thirdparty/angular.js"></script>
-		
-		<link rel="stylesheet" type="text/css" href="style.css" />
-		
+		<!-- new stuff -->
 		<script src="main.js"></script>
+		
+		<link rel="stylesheet" type="text/css" href="style.css" />		
 	</head>
 	
-	<body ng-app="lsbApp">
+	<body ng-app="lsbApp" ng-controller="serverBrowser">
 		<div class="maplist icons">
 
 			<div class="controls">
@@ -144,7 +144,7 @@
 			</div>
 			
 			<bottom>
-				<button class='btn-primary' ng-click="StartGame()">Find Servers</button>
+				<button class='btn-primary' ng-click="fetchServers()">Find Servers</button>
 			</bottom>
 
 		</gamesettings>
