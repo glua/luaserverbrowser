@@ -3,7 +3,7 @@ lsb = {}
 include("util.lua")
 include("ui.lua")
 
-lsb.util.fetchServers(nil, {appid = 4000}, function(ips)
+lsb.util.fetchServers(nil, {appid = 4000, version = '15.04.03', }, function(ips)
 	--[[
 	
 	new problem
@@ -13,7 +13,23 @@ lsb.util.fetchServers(nil, {appid = 4000}, function(ips)
 
 	]]
 
-	lsb.util.fetchServerInfo("76.23.113.56:27015", PrintTable)
+	local amt = 0
+
+	for i = 1, 10 do
+		print(i, ips[i], "sent")
+		
+		lsb.util.fetchServerInfo(ips[i], function(data) 
+			print(i, "received")
+
+			--PrintTable(data)
+
+			amt = amt + 1
+		end)
+	end
+
+	timer.Simple(1, function()
+		print(amt, "/10 responses received")
+	end)
 end)
 
 function lsb.init()
