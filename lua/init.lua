@@ -3,13 +3,17 @@ lsb = {}
 include("util.lua")
 include("ui.lua")
 
-lsb.util.fetchServers(nil, nil, function(ips)
-	--why the hell is this crashinggggg
-	--it makes no sense
-	--I don't reuse any sockets, and I close the first before opening the second
-	--help me
+lsb.util.fetchServers(nil, {appid = 4000}, function(ips)
+	--[[
 	
-	lsb.util.fetchServerInfo('104.149.228.84:27035', PrintTable)
+	new problem
+	even after making a new buffer, it doesn't seem to work correctly
+	the second buffer seems to be filled with garbage, the results of the first query, or my ram
+	source never calls us back because our query isn't what they want
+
+	]]
+
+	lsb.util.fetchServerInfo("76.23.113.56:27015", PrintTable)
 end)
 
 function lsb.init()
