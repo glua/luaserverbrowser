@@ -1,15 +1,36 @@
-require("glsock")
-
 lsb.util = {
+	print = function(...)
+		print(string.format('[LSB] - %s', table.concat({...})))
+	end,
 	printh = function(str)
 		str:gsub('.', function(a) print('', a, string.format('0x%02X', a:byte())) end)
 	end,
 
-	sock = GLSock(GLSOCK_TYPE_UDP),
-	--buff = GLSockBuffer() this is crashing
-
-	timelimit = 0.1
+	timelimit = 10
 }
+
+--
+--
+--	our setup
+--	todo: use serverlist.query if module not found
+--
+--
+
+if not(pcall(require, 'glsock')) then
+	lsb.util.print('GLSock module not found - falling back to serverlist')
+
+	lsb.util.fetchServers = serverlist.Query
+
+	return
+end
+
+--
+--
+--	private stuff, just for us :ssh:
+--
+--
+
+local sock = GLSock(GLSOCK_TYPE_UDP)
 
 local serverQuery = table.concat({
 	string.char(0xFF),
@@ -23,7 +44,10 @@ local serverQuery = table.concat({
 
 local handleErr = function(err)
 	if(err ~= GLSOCK_ERROR_SUCCESS) then
-		ErrorNoHalt(string.format("GLSock error #%d", err))
+		--if(err ~= GLSOCK_ERROR_OPERATIONABORTED) then
+			print(string.format("GLSock error #%d", err))
+		--end
+
 		return true
 	end
 end
@@ -34,7 +58,7 @@ end
 
 --https://developer.valvesoftware.com/wiki/Master_Server_Query_Protocol
 
-lsb.util.buildMessage = function(ip, options)
+local buildMessage = function(ip, options)
 	local tab = {
 		string.char(0x31),
 		string.char(0x00),
@@ -51,7 +75,14 @@ lsb.util.buildMessage = function(ip, options)
 	return table.concat(tab)
 end
 
-lsb.util.fetchServersCallback = function(sock, callback)
+--
+--
+--	our callbacks
+--	this is where most of the fun stuff happens
+--
+--
+
+local fetchServersCallback = function(sock, callback)
 	--"Steam uses a packet size of 1400 bytes + IP/UDP headers. If a request or response needs more packets for the data it starts the packets with an additional header."
 	sock:ReadFrom(1400, function(sock, host, port, data, err)
 		if(handleErr(err)) then return end
@@ -81,31 +112,19 @@ lsb.util.fetchServersCallback = function(sock, callback)
 	end)
 end
 
-lsb.util.fetchServers = function(ip, options, callback)
-	local msg = lsb.util.buildMessage(ip, options or {})
-
-	local buff = GLSockBuffer()
-
-	buff:Write(msg)
-
-	lsb.util.sock:SendTo(buff, 'hl2master.steampowered.com', 27011, function(sock, len, err)
-		if(handleErr(err)) then return end
-
-		lsb.util.fetchServersCallback(sock, callback)
-	end)
-end
-
 --https://developer.valvesoftware.com/wiki/Server_Queries
 
-lsb.util.fetchServerInfoCallback = function(sock, callback)
+local fetchServerInfoCallback = function(sock, callback)
 	sock:ReadFrom(1400, function(sock, host, port, data, err)
 		if(handleErr(err)) then return end
 
-		--this is always going to be 0x54
-		data:Clear(1)
+		--first byte is always going to be 0x54
+		--I think protocal is useless too, and then there's trash right after it
+		--so let's just get rid of all of it 
+		data:Clear(6)
 
 		local info = {
-			protocol 		= readBuffer(data, 'Byte'),
+			--protocol 		= readBuffer(data, 'Byte'),
 			name 			= readBuffer(data, 'String'),
 			map 			= readBuffer(data, 'String'),
 			folder 			= readBuffer(data, 'String'),
@@ -118,29 +137,31 @@ lsb.util.fetchServerInfoCallback = function(sock, callback)
 			env 			= readBuffer(data, 'Byte'),
 			pass 			= readBuffer(data, 'Byte'),
 			VAC 			= readBuffer(data, 'Byte'),
-			version 		= readBuffer(data, 'String')
+			version 		= readBuffer(data, 'String'),
+			EDF 			= readBuffer(data, 'Byte')
 		}
 
-		local flag 			= readBuffer(data, 'Byte')
-
-		if(bit.band(flag, 0x80) == 0x80) then
+		if(bit.band(info.EDF, 0x80) == 0x80) then
 			info.port 		= readBuffer(data, 'Byte')
 		end
 
-		if(bit.band(flag, 0x10) == 0x10) then
+		if(bit.band(info.EDF, 0x10) == 0x10) then
 			info.steamID 	= readBuffer(data, 'Long')
 		end
 
-		if(bit.band(flag, 0x40) == 0x40) then
+		if(bit.band(info.EDF, 0x40) == 0x40) then
 			info.specPort 	= readBuffer(data, 'Short')
 			info.specName 	= readBuffer(data, 'String')
 		end
 
-		if(bit.band(flag, 0x20) == 0x20) then
+		if(bit.band(info.EDF, 0x20) == 0x20) then
+			--more trash??
+			data:Clear(5)
+
 			info.tags 		= readBuffer(data, 'String')
 		end
 
-		if(bit.band(flag, 0x01) == 0x01) then
+		if(bit.band(info.EDF, 0x01) == 0x01) then
 			info.gameID 	= readBuffer(data, 'Long')
 		end
 
@@ -148,19 +169,131 @@ lsb.util.fetchServerInfoCallback = function(sock, callback)
 	end)
 end
 
-lsb.util.fetchServerInfo = function(fullip, callback)
+--
+--	
+--	the public stuff
+--
+--
+
+local queue = {}
+local alive = {}
+
+--would have been nice to have this a coroutine
+hook.Add("Think", "lsbCoreThink", function()
+	--check to see if any of our servers timed out 
+	for i = 1, #alive do
+		--always gonna be on top of the stack
+		local curCon = alive[1]
+
+		if(curCon.stime + lsb.util.timelimit < CurTime()) then
+			--cancel?
+
+			curCon.callback()
+
+			--remove this connection
+			table.remove(alive, 1)
+		else
+			--all of our connections were made and added in chronological order
+			--so if one isn't old enough to timeout, the rest won't be either
+			break
+		end
+	end
+
+	--start the connection for the next server
+	if(#queue > 0) then
+		--get the bottom of our queue
+		local curServer = table.remove(queue)
+
+		local buff = GLSockBuffer()
+
+		buff:Write(serverQuery)
+
+		--send our query
+		sock:SendTo(buff, curServer.ip, curServer.port, function(sock, len, err)
+			if(handleErr(err)) then return end
+
+			local stime = CurTime()
+
+			--hopefully this will get called
+			fetchServerInfoCallback(sock, function(info)
+				--if it does, we want to remove this connection from the list of
+				--potentially timed out ones
+				for i = 1, #alive do
+					local curCon = alive[i]
+
+					--we can use our start time to identify this connection because
+					--we only do one connection per frame
+					if(curCon.stime == stime) then
+						table.remove(alive, i)
+						break
+					end
+				end
+
+				info.ping = math.floor((CurTime() - stime) * 1000)
+
+				curServer.callback(info)
+			end)
+			
+			--make sure we can still interact with this connection
+			table.insert(alive, {
+				stime = stime,
+				--sock = sock, save this until I find out how to cancel connections
+				callback = curServer.callback
+			})
+		end)
+	end
+end)
+
+lsb.util.fetchServers = function(ip, options, callback)
+	local msg = buildMessage(ip, options or {})
+
 	local buff = GLSockBuffer()
 
-	buff:Write(serverQuery)
+	buff:Write(msg)
 
+	sock:SendTo(buff, 'hl2master.steampowered.com', 27011, function(sock, len, err)
+		if(handleErr(err)) then return end
+
+		local resolved = false
+
+		fetchServersCallback(sock, function(info)
+			if(resolved) then return end
+			resolved = true
+
+			--cancel timer?
+
+			callback(info)
+		end)
+
+		timer.Simple(lsb.util.timelimit, function()
+			if(resolved) then return end
+			resolved = true
+
+			sock:Cancel()
+
+			callback()
+		end)
+	end)
+end
+
+lsb.util.fetchServerInfo = function(fullip, callback)
 	--this probably needs work
 	local ip, port = fullip:match('(.*):(.*)')
 
-	lsb.util.sock:SendTo(buff, ip, port and tonumber(port) or 27015, function(sock, len, err)
-		if(handleErr(err)) then return end
+	table.insert(queue, 1, {
+		ip = ip,
+		port = port and tonumber(port) or 27015,
+		callback = callback
+	})
+end
 
-		lsb.util.fetchServerInfoCallback(sock, callback)
-	end)
+--other public stuff
 
-	buff:Clear(buff:Size())
+local version
+lsb.util.getVersion = function()
+	if not(version) then
+	 	version = (file.Read("steam.inf", "MOD") or ""):match("PatchVersion=([^\n]+)")
+	end
+
+	return version
 end

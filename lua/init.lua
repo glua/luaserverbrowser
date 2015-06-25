@@ -3,34 +3,11 @@ lsb = {}
 include("util.lua")
 include("ui.lua")
 
-lsb.util.fetchServers(nil, {appid = 4000, version = '15.04.03', }, function(ips)
-	--[[
-	
-	new problem
-	even after making a new buffer, it doesn't seem to work correctly
-	the second buffer seems to be filled with garbage, the results of the first query, or my ram
-	source never calls us back because our query isn't what they want
-
-	]]
-
-	local amt = 0
-
-	for i = 1, 10 do
-		print(i, ips[i], "sent")
-		
-		lsb.util.fetchServerInfo(ips[i], function(data) 
-			print(i, "received")
-
-			--PrintTable(data)
-
-			amt = amt + 1
-		end)
-	end
-
-	timer.Simple(1, function()
-		print(amt, "/10 responses received")
-	end)
-end)
+--
+--
+-- our setup
+--
+--
 
 function lsb.init()
 	--get our vgui ready
@@ -55,3 +32,33 @@ function lsb.init()
 end
 
 hook.Add("GameContentChanged", "lsb", lsb.init)
+
+--
+--
+-- fetch the first of our servers
+--
+--
+
+lsb.util.fetchServers(nil, {appid = 4000, version = lsb.util.getVersion()}, function(ips)
+	if not(ips) then
+		lsb.util.print('Master list response timed out')
+		return
+	end
+
+	local amt = 0
+	local servers = {}
+
+	for i = 1, #ips do
+		lsb.util.fetchServerInfo(ips[i], function(data) 
+			if(data) then
+				servers[ips[i]] = data
+
+				amt = amt + 1
+			end
+		end)
+	end
+
+	timer.Simple(15, function()
+		lsb.ui.populate(servers)
+	end)
+end)

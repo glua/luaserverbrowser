@@ -25,19 +25,21 @@
 			</div>
 
 			<div class="scrollable" style="margin: 0px; top: 0px; left: 200px">
+				<div id="noResults" class="centeredbg" ng-hide="serverResults">
+					<span class="centered">No results found &#58;&#40;</span>
+				</div>
 
-				<ul class="category" ng-repeat="category in MapList | orderBy:'order'" ng-hide="category.maps.length == 0" ng-show="CurrentCategory == category.category">
-				
-					<li>{{category.category}} <small>{{CountFiltered(category.maps)}} </small><small ng-tranny="category.maps.length == 1 && 'newgame_map' || 'newgame_maps'"></small></li>
-
-					<li class="icon mapicon {{MapClass( map )}}" ng-repeat="map in category.maps | orderBy:'toString()' | filter:SearchText" >
-						<img ng-click="FavMap( map )" class="{{FavMapClass( map )}} {{FavMapHover( map )}}" src="img/empty.png" />
-						<img ng-click="ClickMap( map )" ng-src="{{MapIcon( map, category.category )}}" class="thumbnail" /><br /> 
-						{{map}}
-					</li>
-
-				</ul>
-
+				<table id="serverResults" ng-show="serverResults">
+					<tr ng-repeat="server in serverResults">
+						<td class="icon" ng-class="{pass: server.pass}">{{server.pass}}</td>
+						<td class="icon" ng-class="{VAC: server.VAC}">{{server.VAC}}</td>
+						<td class="name" ng-bind="server.name"></td>
+						<td ng-bind="server.gamemode"></td>
+						<td>{{server.numPlayers}} / {{server.maxPlayers}}</td>
+						<td ng-bind="server.map"></td>
+						<td ng-bind="server.ping"></td>
+					</tr>
+				</table>
 			</div>
 		</div>
 

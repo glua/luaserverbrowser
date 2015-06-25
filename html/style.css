@@ -1,3 +1,42 @@
+.centeredbg:before {
+	content:' ';
+	display:inline-block;
+	height:100%;
+	vertical-align:middle;
+	margin-right:-0.25em;
+}
+
+.centered {
+	display:inline-block;
+	vertical-align:middle;
+}
+
+#noResults {
+	position:absolute;
+	top:0;
+	right:0;
+	bottom:0;
+	left:0;
+	text-align:center;
+}
+
+#serverResults {
+	width:100%;
+}
+
+#serverResults tr {
+	height:40px;
+	line-height:40px;
+}
+
+#serverResults td.icon {
+	width:30px;
+}
+
+#serverResults td.name {
+	width:50%;
+}
+
 gamesettings h1 {
 	text-align:center;
 	font-weight:normal;
@@ -10,14 +49,17 @@ gamesettings .scrollable {
 	overflow-y:auto;
 }
 
-gamesettings ul {
+ul {
 	padding:0;
 	margin:0;
 }
 
+li {
+	list-style:none;
+}
+
 gamesettings ul li {
 	display:block;
-	list-style:none;
 	/* line-height:20px; */
 	margin-bottom:8px;
 }
