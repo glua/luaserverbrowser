@@ -44,9 +44,9 @@ local serverQuery = table.concat({
 
 local handleErr = function(err)
 	if(err ~= GLSOCK_ERROR_SUCCESS) then
-		--if(err ~= GLSOCK_ERROR_OPERATIONABORTED) then
-			print(string.format("GLSock error #%d", err))
-		--end
+		if(err ~= GLSOCK_ERROR_OPERATIONABORTED) then
+			lsb.util.print(string.format("GLSock error #%d", err))
+		end
 
 		return true
 	end
@@ -172,31 +172,43 @@ end
 --
 --	
 --	the public stuff
+--	note, this assumes that only one batch of servers will be requested
+--	at a time. this is intended because if you need a new batch of servers,
+--	you shouldn't need the old ones anyway (might wanna rethink your batches
+--	if that's not the case!)
 --
 --
 
 local queue = {}
 local alive = {}
+local callback
 
 --would have been nice to have this a coroutine
 hook.Add("Think", "lsbCoreThink", function()
-	--check to see if any of our servers timed out 
-	for i = 1, #alive do
-		--always gonna be on top of the stack
-		local curCon = alive[1]
+	--if we have connections open
+	if(#alive > 0) then
+		--check to see if any of our servers timed out
+		for i = 1, #alive do
+			--always gonna be on top of the stack
+			local curCon = alive[1]
 
-		if(curCon.stime + lsb.util.timelimit < CurTime()) then
-			--cancel?
+			if(curCon.stime + lsb.util.timelimit < CurTime()) then
+				--cancel?
 
-			curCon.callback()
+				curCon.callback()
 
-			--remove this connection
-			table.remove(alive, 1)
-		else
-			--all of our connections were made and added in chronological order
-			--so if one isn't old enough to timeout, the rest won't be either
-			break
+				--remove this connection
+				table.remove(alive, 1)
+			else
+				--all of our connections were made and added in chronological order
+				--so if one isn't old enough to timeout, the rest won't be either
+				break
+			end
 		end
+	elseif(#queue == 0 and callback) then
+		callback()
+
+		callback = nil
 	end
 
 	--start the connection for the next server
@@ -231,7 +243,7 @@ hook.Add("Think", "lsbCoreThink", function()
 
 				info.ping = math.floor((CurTime() - stime) * 1000)
 
-				curServer.callback(info)
+				curServer.callback(curServer.fullip, info)
 			end)
 			
 			--make sure we can still interact with this connection
@@ -276,15 +288,24 @@ lsb.util.fetchServers = function(ip, options, callback)
 	end)
 end
 
-lsb.util.fetchServerInfo = function(fullip, callback)
-	--this probably needs work
-	local ip, port = fullip:match('(.*):(.*)')
+lsb.util.fetchServerInfo = function(ips, serverCallback, doneCallback)
+	for i = 1, #ips do
+		local fullip = ips[i]
 
-	table.insert(queue, 1, {
-		ip = ip,
-		port = port and tonumber(port) or 27015,
-		callback = callback
-	})
+		--this probably needs work
+		local ip, port = fullip:match('(.*):(.*)')
+
+		ips[i] = {
+			fullip = ip,
+			ip = ip,
+			port = port and tonumber(port) or 27015,
+			callback = serverCallback
+		}
+	end
+
+	queue = ips
+	table.Empty(alive) --optimized :)
+	callback = doneCallback
 end
 
 --other public stuff

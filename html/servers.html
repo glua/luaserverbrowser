@@ -22,14 +22,35 @@
 		<div class="maplist icons">
 
 			<div class="controls">
+				{{loading}}
+				{{serverResults.length}}
+				{{resultsLength}}
 			</div>
+			
+			<div id="resultsHeaders" ng-show="serverResults.length">
+				<table class="results">
+					<tr>
+						<td class="icon">A</td>
+						<td class="icon">B</td>
+						<td class="name">Name</td>
+						<td>Gamemode</td>
+						<td>Players</td>
+						<td>Map</td>
+						<td>Ping</td>
+					</tr>
+				</table>
+			</div>
+			
+			<div class="scrollable" style="top:40px; right:0; bottom:0; left:200px;">
+				<div id="noResults" class="centeredbg" ng-show="loading && !serverResults.length">
+					<span class="centered">Fetching results...</span>
+				</div>
 
-			<div class="scrollable" style="margin: 0px; top: 0px; left: 200px">
-				<div id="noResults" class="centeredbg" ng-hide="serverResults">
+				<div id="noResults" class="centeredbg" ng-hide="loading || serverResults.length">
 					<span class="centered">No results found &#58;&#40;</span>
 				</div>
 
-				<table id="serverResults" ng-show="serverResults">
+				<table id="serverResults" class="results" ng-show="serverResults.length">
 					<tr ng-repeat="server in serverResults">
 						<td class="icon" ng-class="{pass: server.pass}">{{server.pass}}</td>
 						<td class="icon" ng-class="{VAC: server.VAC}">{{server.VAC}}</td>
@@ -40,6 +61,12 @@
 						<td ng-bind="server.ping"></td>
 					</tr>
 				</table>
+			</div>
+				
+			<div id="loadingbar" ng-show="loading == 2">
+				<div id="label">{{serverResults.length}} / {{resultsLength}}</div>
+				<div id="fg" ng-style="loadingBarStyle()"></div>
+				<div id="bg"></div>
 			</div>
 		</div>
 

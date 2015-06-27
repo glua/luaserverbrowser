@@ -17,21 +17,17 @@ lsb.ui.init = function()
 	lsb.ui.vgui:SetVisible(false)
 end
 
-lsb.ui.populate = function(servers)
-	PrintTable(servers)
-	
-	local json = util.TableToJSON(servers)
+lsb.ui.call = function(str)
+	--lsb.util.print(string.format("running js '%s'", str))
 
-	--print(json)
-
-	lsb.ui.vgui:Call(string.format(
+	return lsb.ui.vgui:Call(string.format(
 		[[
-			var scope = angular.element(document.getElementsByTagName('body')[0]).scope();
+			var $scope = angular.element(document.getElementsByTagName('body')[0]).scope();
 
-			scope.$apply(function() {
-				scope.serverResults = %s;
+			$scope.$apply(function() {
+				%s
 			});
 		]],
-		json
+		str
 	))
 end

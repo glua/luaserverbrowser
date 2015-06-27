@@ -1,15 +1,19 @@
-lsb = {}
+lsb = {
+	initialized = false
+}
 
 include("util.lua")
 include("ui.lua")
 
 --
 --
--- our setup
+--	our setup
 --
 --
 
 function lsb.init()
+	if(lsb.initialized) then return end
+
 	--get our vgui ready
 	lsb.ui.init()
 
@@ -29,36 +33,69 @@ function lsb.init()
 			$('div.page').css('visibility', (isServers ? 'hidden' : 'visible'));
 		});
 	]])
+
+--
+--
+--	fetch the first of our servers
+--
+--
+
+	lsb.ui.call([[
+		$scope.loading = 1;
+		$scope.serverResults = [];
+	]])
+
+	lsb.util.print('Requesting master server list...')
+
+	lsb.util.fetchServers(nil, {appid = 4000, version = lsb.util.getVersion()}, function(ips)
+		if not(ips) then
+			lsb.util.print('Master server list response timed out')
+
+			lsb.ui.call('$scope.loading = false;')
+
+			return
+		end
+
+		lsb.util.print('Master server list received!')
+		lsb.util.print('Getting server info...')
+
+		local pinged = #ips
+		local ponged = 0
+		local servers = {}
+
+		lsb.ui.call(string.format(
+			[[
+				$scope.loading = 2;
+				$scope.resultsLength = %s;
+			]],
+			pinged
+		))
+
+		lsb.util.fetchServerInfo(ips, function(ip, data) 
+			if(data) then
+				servers[ip] = data
+
+				data.ip = ip
+
+				lsb.ui.call(string.format(
+					'$scope.serverResults.push(%s);',
+					util.TableToJSON(data)
+				))
+
+				ponged = ponged + 1
+			end
+		end, function()
+			lsb.util.print('Server info received!')
+			lsb.util.print(string.format('%u%% success rate (%u/%u)', (ponged / pinged) * 100, ponged, pinged))
+
+			lsb.ui.call('console.log(JSON.stringify($scope.serverResults));')
+
+			lsb.ui.call('$scope.loading = false;')
+		end)
+	end)
+
+	--done :)
+	lsb.initialized = true
 end
 
-hook.Add("GameContentChanged", "lsb", lsb.init)
-
---
---
--- fetch the first of our servers
---
---
-
-lsb.util.fetchServers(nil, {appid = 4000, version = lsb.util.getVersion()}, function(ips)
-	if not(ips) then
-		lsb.util.print('Master list response timed out')
-		return
-	end
-
-	local amt = 0
-	local servers = {}
-
-	for i = 1, #ips do
-		lsb.util.fetchServerInfo(ips[i], function(data) 
-			if(data) then
-				servers[ips[i]] = data
-
-				amt = amt + 1
-			end
-		end)
-	end
-
-	timer.Simple(15, function()
-		lsb.ui.populate(servers)
-	end)
-end)
+hook.Add("GameContentChanged", "lsb.GCC.init", lsb.init)
