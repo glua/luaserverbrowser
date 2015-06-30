@@ -11,8 +11,13 @@ include("ui.lua")
 --
 --
 
+GetServers = function(...) print(...) end
+
 function lsb.init()
 	if(lsb.initialized) then return end
+
+	--first off, let me say I'm drunk off of shitty wine
+	DoStopServers('internet')
 
 	--get our vgui ready
 	lsb.ui.init()
@@ -34,30 +39,42 @@ function lsb.init()
 		});
 	]])
 
+	--the first of our servers
+	lsb.getServers({appid = 4000, version = lsb.util.getVersion()})
+
+	--done :)
+	lsb.initialized = true
+end
+
+hook.Add("GameContentChanged", "lsb.GCC.init", lsb.init)
+
 --
 --
---	fetch the first of our servers
+--	abstract our server-getting
+--	this is to make it easy since we have to get our server list and
+--	individual info for each server
 --
 --
 
+lsb.getServers = function(options)
 	lsb.ui.call([[
 		$scope.loading = 1;
 		$scope.serverResults = [];
 	]])
 
-	lsb.util.print('Requesting master server list...')
+	--lsb.util.print('Requesting master server list...')
 
 	lsb.util.fetchServers(nil, {appid = 4000, version = lsb.util.getVersion()}, function(ips)
 		if not(ips) then
-			lsb.util.print('Master server list response timed out')
+			--lsb.util.print('Master server list response timed out')
 
 			lsb.ui.call('$scope.loading = false;')
 
 			return
 		end
 
-		lsb.util.print('Master server list received!')
-		lsb.util.print('Getting server info...')
+		--lsb.util.print('Master server list received!')
+		--lsb.util.print('Getting server info...')
 
 		local pinged = #ips
 		local ponged = 0
@@ -85,17 +102,12 @@ function lsb.init()
 				ponged = ponged + 1
 			end
 		end, function()
-			lsb.util.print('Server info received!')
-			lsb.util.print(string.format('%u%% success rate (%u/%u)', (ponged / pinged) * 100, ponged, pinged))
+			--lsb.util.print('Server info received!')
+			--lsb.util.print(string.format('%u%% success rate (%u/%u)', (ponged / pinged) * 100, ponged, pinged))
 
 			lsb.ui.call('console.log(JSON.stringify($scope.serverResults));')
 
 			lsb.ui.call('$scope.loading = false;')
 		end)
 	end)
-
-	--done :)
-	lsb.initialized = true
 end
-
-hook.Add("GameContentChanged", "lsb.GCC.init", lsb.init)

@@ -313,7 +313,7 @@ end
 local version
 lsb.util.getVersion = function()
 	if not(version) then
-	 	version = (file.Read("steam.inf", "MOD") or ""):match("PatchVersion=([^\n]+)")
+	 	version = (file.Read("steam.inf", "MOD") or ""):match("PatchVersion=(%d-%.%d-%.%d+)")
 	end
 
 	return version

@@ -19,29 +19,22 @@
 	</head>
 	
 	<body ng-app="lsbApp" ng-controller="serverBrowser">
-		<div class="maplist icons">
-
-			<div class="controls">
-				{{loading}}
-				{{serverResults.length}}
-				{{resultsLength}}
-			</div>
-			
+		<div class="maplist">			
 			<div id="resultsHeaders" ng-show="serverResults.length">
 				<table class="results">
 					<tr>
-						<td class="icon">A</td>
-						<td class="icon">B</td>
-						<td class="name">Name</td>
-						<td>Gamemode</td>
-						<td>Players</td>
-						<td>Map</td>
-						<td>Ping</td>
+						<td class="pass icon"></td>
+						<td class="VAC icon"></td>
+						<td class="big">Name</td>
+						<td class="mid">Gamemode</td>
+						<td class="small">Players</td>
+						<td class="mid">Map</td>
+						<td class="small">Ping</td>
 					</tr>
 				</table>
 			</div>
 			
-			<div class="scrollable" style="top:40px; right:0; bottom:0; left:200px;">
+			<div id="results" class="scrollable">
 				<div id="noResults" class="centeredbg" ng-show="loading && !serverResults.length">
 					<span class="centered">Fetching results...</span>
 				</div>
@@ -52,13 +45,13 @@
 
 				<table id="serverResults" class="results" ng-show="serverResults.length">
 					<tr ng-repeat="server in serverResults">
-						<td class="icon" ng-class="{pass: server.pass}">{{server.pass}}</td>
-						<td class="icon" ng-class="{VAC: server.VAC}">{{server.VAC}}</td>
-						<td class="name" ng-bind="server.name"></td>
-						<td ng-bind="server.gamemode"></td>
-						<td>{{server.numPlayers}} / {{server.maxPlayers}}</td>
-						<td ng-bind="server.map"></td>
-						<td ng-bind="server.ping"></td>
+						<td class="icon" ng-class="{pass: server.pass}"></td>
+						<td class="icon" ng-class="{VAC: server.VAC}"></td>
+						<td class="big" ng-bind="server.name"></td>
+						<td class="mid" ng-bind="server.gamemode"></td>
+						<td class="small">{{server.numPlayers}} / {{server.maxPlayers}}</td>
+						<td class="mid" ng-bind="server.map"></td>
+						<td class="small" ng-bind="server.ping"></td>
 					</tr>
 				</table>
 			</div>
@@ -73,102 +66,23 @@
 		<gamesettings>
 			<div class="scrollable" style="margin: 10px; bottom: 65px; top: 0px">
 				<ul>
-					<!-- <li>
-						<label>Region:</label>
-						<select>
-							<option value="0">U.S. East Coast</option>
-							<option value="1">U.S. West Coast</option>
-							<option value="2">South America</option>
-							<option value="3">Europe</option>
-							<option value="4">Asia</option>
-							<option value="5">Australia</option>
-							<option value="6">Middle East</option>
-							<option value="7">Africa</option>
-							<option value="255">Rest of the world</option>
-						</select>
-					</li> -->
+					<li class="select">
+						<label for="regionSelect" ng-bind="settings.region[query.master.region]"></label>
+						<input type="checkbox" id="regionSelect" ng-model="regionSelect">
+						
+						<div ng-show="regionSelect">
+							<a ng-repeat="(val, name) in settings.region" ng-click="setRegion(val)" ng-bind="name"></a>
+						</div>
+					</li>
 					
-					<div class="dropdown">
-
-						<div class="label" onclick="$(this).siblings('.contents').toggle()">
-							<span>Region</span>
-							<i class='caret'></i>
-						</div>
-						<div class="contents" onclick="$(this).hide()">
-							<div ng-repeat="ply in Players" ng-click="UpdateMaxPlayers( ply )" ng-tranny="ply.label">
-							{{ply.label}}
-							</div>
-						</div>
+					<div ng-repeat="group in settings.query">
+						<li class="label" ng-bind="group[0]"></li>
+						
+						<li ng-repeat="option in group[1]" ng-class="{number: option[4]}">
+							<label ng-bind="option[0]"></label>
+							<input type="{{option[1]}}" ng-model="query[option[2]][option[3]]">
+						</li>
 					</div>
-
-					<li class="label">Generic stuff</li>
-					
-					<li>
-						<label>Dedicated</label>
-						<input type="checkbox"/>
-					</li>
-					<li>
-						<label>VAC</label>
-						<input type="checkbox"/>
-					</li>
-					<li>
-						<label>Server empty</label>
-						<input type="checkbox"/>
-					</li>
-					<li>
-						<label>Server has players</label>
-						<input type="checkbox"/>
-					</li>
-					<li>
-						<label>Server not full</label>
-						<input type="checkbox"/>
-					</li>
-					<li>
-						<label>Whitelisted</label>
-						<input type="checkbox"/>
-					</li>
-					
-					<li class="label">Specific stuff</li>
-
-					<li>
-						<label>Map</label>
-						<input type="text"/>
-					</li>
-					<li>
-						<label>Hostname</label>
-						<input type="text"/>
-					</li>
-					<li>
-						<label>IP Address</label>
-						<input type="text"/>
-					</li>
-					
-					<li class="label">Probably useless</li>
-
-					<li>
-						<label>Game directory</label>
-						<input type="text" value="garrysmod"/>
-					</li>
-					<li>
-						<label>Linux</label>
-						<input type="checkbox"/>
-					</li>
-					<li>
-						<label>Spectator server</label>
-						<input type="checkbox"/>
-					</li>
-					<li class="number">
-						<label>App ID</label>
-						<input type="text" value="4000"/>
-					</li>
-					<li class="number">
-						<label>Version</label>
-						<input type="text" value="15.04.03"/>
-					</li>
-					<li>
-						<label>Collapse multiples</label>
-						<input type="checkbox"/>
-					</li>
 				</ul>
 			</div>
 			

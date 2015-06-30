@@ -1,3 +1,7 @@
+.maplist {
+	overflow:hidden;
+}
+
 .centeredbg:before {
 	content:' ';
 	display:inline-block;
@@ -22,23 +26,45 @@
 
 .results {
 	width:100%;
+	border-collapse:collapse;
+	table-layout:fixed;
+	text-align:center;
+	margin-left:5px;
 }
 
 #resultsHeaders {
 	position:absolute;
 	top:0;
-	right:0;
+	right:17px;
 	height:40px;
-	left:200px;
+	left:0;
 	
 	font-weight:bold;
-	text-align:center;
+	text-align:center !important;
 }
-	
+
+#results {
+	top:40px;
+	left:0;
+	bottom:5px;
+	overflow-y:scroll;
+}
 
 .results tr {
 	height:40px;
 	line-height:40px;
+	cursor:pointer;
+	border-radius:3px;
+}
+
+#serverResults tr:hover {
+	background:#ccdeff;
+}
+
+.results td {
+	white-space:nowrap;
+	text-overflow:ellipsis;
+	overflow:hidden;
 }
 
 .results td.icon {
@@ -46,18 +72,38 @@
 	text-align:center;
 }
 
-.results td.name {
-	width:50%;
+.results .VAC {
+	background:url(vac.png) center center no-repeat;
+	fill:#000;
+}
+
+.results .pass {
+	background:url(pass.png) center center no-repeat;
+	fill:#000;
+}
+
+.results td.big {
+	width:40%;
+	text-align:left;
+}
+
+.results td.mid {
+	width:20%;
+}
+
+.results td.small {
+	width:10%;
 }
 
 #loadingbar {
 	position:absolute;
-	left:200px; right:0;
+	left:0; right:0;
 	bottom:0;
 	height:40px;
 	
 	background:#fff;
 	border-top:2px solid #ddd;
+	border-radius:0 0 5px 5px;
 	line-height:40px;
 	text-align:center;
 	font-size:20px;
@@ -75,19 +121,14 @@
 	/* if awesomium ever upgrades :( */
 	
 	transition:width 0.1s;
+	border-radius:0 0 0 5px;
 }
 
 #loadingbar #bg {
 	width:100%;
 	
 	background:#ccc;
-}
-
-gamesettings h1 {
-	text-align:center;
-	font-weight:normal;
-	font-size:28px;
-	color:#444;
+	border-radius:0 0 5px 5px;
 }
 
 gamesettings .scrollable {
@@ -108,6 +149,59 @@ gamesettings ul li {
 	display:block;
 	/* line-height:20px; */
 	margin-bottom:8px;
+}
+
+gamesettings .select label {
+	display:block;
+	border-radius: 3px;
+	height: 28px;
+	padding-left: 10px;
+	line-height: 28px;
+	
+	font-weight: bold;
+	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#5C5), to(#2C2));
+	border: 1px solid #CCC;
+	border-color: #2a2 #2a2 #181;
+	color: white;
+	cursor:pointer;
+	vertical-align: middle;
+	-webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+gamesettings .select input[type="checkbox"] {
+	position:absolute;
+	right:10px;
+	top:13px;
+	
+	-webkit-appearance:none;
+	width:0;
+	height:0;
+	padding:0;
+	cursor:pointer;
+	border-top: 5px solid white;
+	border-right: 5px solid transparent;
+	border-left: 5px solid transparent;
+}
+
+gamesettings .select div {
+	position:absolute;
+	left:0; right:0;
+	z-index:1;
+	background-color:#fff;
+	border-radius:4px;
+	border:1px solid #aaa;
+	font-size:13px;
+	-webkit-box-shadow: 2px 2px 8px rgba( 0, 0, 0, 0.5 );
+}
+
+gamesettings .select a {
+	display:block;
+	color:#000;
+	padding: 4px 15px;
+}
+
+gamesettings .select a:hover {
+	background-color: #acf;
 }
 
 gamesettings li label, gamesettings li.label {

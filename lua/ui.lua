@@ -15,6 +15,8 @@ lsb.ui.init = function()
 
 	lsb.ui.vgui:MakePopup()
 	lsb.ui.vgui:SetVisible(false)
+
+	lsb.ui.call(string.format('$scope.query.master.version_match = "%s";', lsb.util.getVersion()))
 end
 
 lsb.ui.call = function(str)
