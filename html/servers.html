@@ -34,7 +34,7 @@
 				</table>
 			</div>
 			
-			<div id="results" class="scrollable">
+			<div id="results" class="scrollable" ng-class="{selected: curServer}">
 				<div id="noResults" class="centeredbg" ng-show="loading && !serverResults.length">
 					<span class="centered">Fetching results...</span>
 				</div>
@@ -44,7 +44,7 @@
 				</div>
 
 				<table id="serverResults" class="results" ng-show="serverResults.length">
-					<tr ng-repeat="server in serverResults">
+					<tr ng-repeat="($index, server) in serverResults" ng-click="viewServer($index)">
 						<td class="icon" ng-class="{pass: server.pass}"></td>
 						<td class="icon" ng-class="{VAC: server.VAC}"></td>
 						<td class="big" ng-bind="server.name"></td>
@@ -54,6 +54,19 @@
 						<td class="small" ng-bind="server.ping"></td>
 					</tr>
 				</table>
+			</div>
+			
+			<div id="serverInfo" ng-class="{open: curServer}">
+				<p ng-hide="curServer">Select a server to see info</p>
+				
+				<div ng-show="curServer">
+					<span ng-bind="curServer.name"></span>
+					<span ng-bind="curServer.gamemode"></span>
+					
+					<br />
+					
+					<span>{{serverRules}}</span>
+				</div>
 			</div>
 				
 			<div id="loadingbar" ng-show="loading == 2">

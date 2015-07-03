@@ -3,7 +3,45 @@ lsb.util = {
 		print(string.format('[LSB] - %s', table.concat({...})))
 	end,
 	printh = function(str)
-		str:gsub('.', function(a) print('', a, string.format('0x%02X', a:byte())) end)
+		if not(type(str) == 'string') then
+			str = tostring(str)
+		end
+
+		local x = 1
+
+		for i = 1, math.ceil(#str / 16) do
+			local hex, dec = {}, {}
+
+			for j = 1, 16 do
+				local c = str[x]
+				local b = c:byte()
+
+				if(#c > 0) then
+					hex[#hex + 1] = string.format('%02X', b)
+					dec[#dec + 1] = (b > 0x1F and b ~= 0x7F) and c or '.'
+				else
+					hex[#hex + 1] = '  '
+					dec[#dec + 1] = ' '
+				end
+
+				x = x + 1
+			end
+
+			print(table.concat(hex, ' '), '', table.concat(dec))
+		end
+	end,
+	buildBuffer = function(...)
+		local tab = {...}
+
+		for i = 1, #tab do
+			local v = tab[i]
+
+			if(type(v) == 'number') then
+				tab[i] = string.char(tab[i])
+			end
+		end
+
+		return table.concat(tab)
 	end,
 
 	timelimit = 10
@@ -30,21 +68,26 @@ end
 --
 --
 
+--our main sock, we're gonna use it a lot
 local sock = GLSock(GLSOCK_TYPE_UDP)
 
-local serverQuery = table.concat({
-	string.char(0xFF),
-	string.char(0xFF),
-	string.char(0xFF),
-	string.char(0xFF),
-	string.char(0x54),
-	'Source Engine Query',
-	string.char(0x00)
-})
+--all source queries start with -1
+local neg1 = lsb.util.buildBuffer(0xFF, 0xFF, 0xFF, 0xFF)
 
+--the types of requests that we can send to our servers
+local query = {
+	info 	= lsb.util.buildBuffer(neg1, 0x54, 'Source Engine Query', 0x00),
+	player 	= lsb.util.buildBuffer(neg1, 0x55), 
+	rules 	= lsb.util.buildBuffer(neg1, 0x56)
+}
+
+--simple error catching :)
 local handleErr = function(err)
 	if(err ~= GLSOCK_ERROR_SUCCESS) then
+		--make sure we didn't throw it
 		if(err ~= GLSOCK_ERROR_OPERATIONABORTED) then
+			--this is a real error then, print it 
+
 			lsb.util.print(string.format("GLSock error #%d", err))
 		end
 
@@ -52,27 +95,89 @@ local handleErr = function(err)
 	end
 end
 
+--ugly code to skip the stupid first return value
 local readBuffer = function(buff, type, ...)
 	return select(2, buff[string.format("Read%s", type)](buff, ...)) or 0
 end
 
---https://developer.valvesoftware.com/wiki/Master_Server_Query_Protocol
+--separate the parts of an ip
+local sepIP = function(fullip)
+	return fullip:match("(%d+%.%d+%.%d+%.%d+):(%d+)")
+end
 
+--the setup for our master server queries
+--see https://developer.valvesoftware.com/wiki/Master_Server_Query_Protocol
 local buildMessage = function(ip, options)
 	local tab = {
-		string.char(0x31),
-		string.char(0x00),
+		0x31,
+		0x00,
 		ip or '0.0.0.0:0',
-		string.char(0X00)
+		0x00
 	}
 
 	for k, v in pairs(options) do
 		tab[#tab + 1] = string.format('\\%s\\%s', k, v)
 	end
 
-	tab[#tab + 1] = string.char(0x00)
+	tab[#tab + 1] = 0x00
 
-	return table.concat(tab)
+	return lsb.util.buildBuffer(unpack(tab))
+end
+
+--unreliable as hell, this sucks
+--see https://developer.valvesoftware.com/wiki/Server_Queries#A2S_RULES
+local getChallenge = function(ip, port, msg, callback)
+	local sock = GLSock(GLSOCK_TYPE_UDP)
+
+	local buff = GLSockBuffer()
+
+	buff:Write(msg)
+
+	--we don't have our challenge yet, so we send -1
+	buff:Write(neg1)
+
+	sock:SendTo(buff, ip, port, function(sock, len, err)
+		print(5)
+
+		if(handleErr(err)) then return end
+
+		sock:ReadFrom(1400, function(sock, host, port, data, err)
+			print(6)
+
+			if(handleErr(err)) then return end
+
+			--this response is unreliable
+			--possible responses:
+			--	0xFFFFFFFF, 0x41, challenge
+			--	0xFFFFFFFF, 0x45, rules
+			--	0xFFFFFFFE, long, byte, byte, short, part one of rules
+
+			local type = readBuffer(data, 'Long')
+
+			if(type == 0xFFFFFFFF) then
+				--the packet isn't split, but it could either be the challenge or rules
+
+				local header = readBuffer(data, 'Byte')
+
+				if(header == 0x41) then
+					--we got our challenge
+
+					callback(readBuffer(data, 'Long'))
+				elseif(header == 0x45) then
+					--we got rules
+
+					callback()
+				elseif(header == 0x44) then
+					--we got players? (not sure if this will ever happen)
+
+					callback()
+				end
+			else
+				--oh boy
+				--we probably got a bunch of rules
+			end
+		end)
+	end)
 end
 
 --
@@ -142,7 +247,7 @@ local fetchServerInfoCallback = function(sock, callback)
 		}
 
 		if(bit.band(info.EDF, 0x80) == 0x80) then
-			info.port 		= readBuffer(data, 'Byte')
+			info.port 		= readBuffer(data, 'Short')
 		end
 
 		if(bit.band(info.EDF, 0x10) == 0x10) then
@@ -166,6 +271,104 @@ local fetchServerInfoCallback = function(sock, callback)
 		end
 
 		callback(info)
+	end)
+end
+
+local readPacket = function(data)
+	local header 		= readBuffer(data, 'Long')
+	local id 			= readBuffer(data, 'Long')
+	local numPackets 	= readBuffer(data, 'Byte')
+	local packetNum 	= readBuffer(data, 'Byte')
+	local packetLength 	= readBuffer(data, 'Short')
+
+	local numRules
+
+	if(packetNum == 0) then
+		--0xFF 0xFF 0xFF 0xFF 0x45
+		data:Clear(5)
+
+		numRules = readBuffer(data, 'Short')
+
+		packetLength = packetLength - 7
+	end
+
+	local str = readBuffer(data, '', packetLength)
+
+	--print(packetNum)
+	--lsb.util.printh(str)
+
+	return packetNum, str, numRules
+end
+
+local readRules = function(data, numRules)
+	local ret = {}
+
+	data:Seek(0, GLSOCKBUFFER_SEEK_SET)
+
+	for i = 1, numRules do
+		local key, val = readBuffer(data, 'String'), readBuffer(data, 'String')
+
+		ret[key] = val
+	end
+
+	return ret
+end
+
+local fetchServerRulesCallback = function(sock, callback)
+	sock:ReadFrom(1400, function(sock, host, port, data, err)
+		if(handleErr(err)) then return end
+
+		local type = readBuffer(data, 'Long')
+
+		if(type == 0xFFFFFFFF) then
+			--single packet
+
+			--todo
+
+			return
+		else
+			--split packet
+
+			local id 			= readBuffer(data, 'Long')
+			local numPackets 	= readBuffer(data, 'Byte')
+
+			data:Seek(0, GLSOCKBUFFER_SEEK_SET)
+
+			local combined = {}
+			local numRead = 1
+			local numRules
+
+			for i = 0, numPackets do
+				if(i == 0) then
+					--we already have our first packet
+
+					local num, payload, rules = readPacket(data)
+
+					numRules = rules
+
+					--we have to use 1 indexing to play nice with table.concat
+					combined[num + 1] = payload
+				else
+					--gotta read it
+
+					sock:ReadFrom(1400, function(sock, host, port, data, err)
+						local num, payload = readPacket(data)
+
+						combined[num + 1] = payload
+
+						numRead = numRead + 1
+
+						if(numRead == numPackets) then
+							local buff = GLSockBuffer()
+
+							buff:Write(table.concat(combined))
+
+							callback(readRules(buff, numRules))
+						end
+					end)
+				end
+			end
+		end
 	end)
 end
 
@@ -218,7 +421,7 @@ hook.Add("Think", "lsbCoreThink", function()
 
 		local buff = GLSockBuffer()
 
-		buff:Write(serverQuery)
+		buff:Write(query.info)
 
 		--send our query
 		sock:SendTo(buff, curServer.ip, curServer.port, function(sock, len, err)
@@ -292,8 +495,7 @@ lsb.util.fetchServerInfo = function(ips, serverCallback, doneCallback)
 	for i = 1, #ips do
 		local fullip = ips[i]
 
-		--this probably needs work
-		local ip, port = fullip:match('(.*):(.*)')
+		local ip, port = sepIP(fullip)
 
 		ips[i] = {
 			fullip = ip,
@@ -306,6 +508,24 @@ lsb.util.fetchServerInfo = function(ips, serverCallback, doneCallback)
 	queue = ips
 	table.Empty(alive) --optimized :)
 	callback = doneCallback
+end
+
+--todo: memoization
+lsb.util.fetchServerRules = function(ip, port, callback)
+	getChallenge(ip, port, query.rules, function(challenge)
+		local sock = GLSock(GLSOCK_TYPE_UDP)
+
+		local buff = GLSockBuffer()
+
+		buff:Write(query.rules)
+		buff:WriteLong(challenge)
+
+		sock:SendTo(buff, ip, port, function(sock, len, err)
+			if(handleErr(err)) then return end
+			
+			fetchServerRulesCallback(sock, callback)
+		end)
+	end)
 end
 
 --other public stuff

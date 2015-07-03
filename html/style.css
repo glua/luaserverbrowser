@@ -29,7 +29,6 @@
 	border-collapse:collapse;
 	table-layout:fixed;
 	text-align:center;
-	margin-left:5px;
 }
 
 #resultsHeaders {
@@ -46,8 +45,12 @@
 #results {
 	top:40px;
 	left:0;
-	bottom:5px;
+	bottom:40px;
 	overflow-y:scroll;
+}
+
+#results.selected {
+	bottom:256px;
 }
 
 .results tr {
@@ -129,6 +132,29 @@
 	
 	background:#ccc;
 	border-radius:0 0 5px 5px;
+}
+
+#serverInfo {
+	position:absolute;
+	left:0;
+	right:0;
+	bottom:0;
+	height:40px;
+}
+
+#serverInfo.open {
+	height:256px;
+}
+
+#serverInfo div {
+	padding:10px;
+}
+
+#serverInfo p {
+	line-height:40px;
+	font-size:11px;
+	color:#666;
+	text-align:center;
 }
 
 gamesettings .scrollable {

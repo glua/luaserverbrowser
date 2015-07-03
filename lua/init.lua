@@ -11,19 +11,20 @@ include("ui.lua")
 --
 --
 
-GetServers = function(...) print(...) end
+--GetServers = function(...) print(...) end
 
 function lsb.init()
 	if(lsb.initialized) then return end
-
-	--first off, let me say I'm drunk off of shitty wine
-	DoStopServers('internet')
 
 	--get our vgui ready
 	lsb.ui.init()
 
 	--holy hacks
 	pnlMainMenu.HTML:AddFunction("lsb", "setVisible", function(b)
+		--don't just hide the original, cancel it
+		DoStopServers('internet')
+
+		--use ours instead
 		lsb.ui.vgui:SetVisible(b)
 	end)
 
@@ -111,3 +112,7 @@ lsb.getServers = function(options)
 		end)
 	end)
 end
+
+concommand.Add('lua_run_menu', function(ply, cmd, args, argstr)
+	RunString(argstr)
+end)

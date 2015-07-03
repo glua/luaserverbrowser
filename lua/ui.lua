@@ -16,7 +16,25 @@ lsb.ui.init = function()
 	lsb.ui.vgui:MakePopup()
 	lsb.ui.vgui:SetVisible(false)
 
+	--let the browser know our version
 	lsb.ui.call(string.format('$scope.query.master.version_match = "%s";', lsb.util.getVersion()))
+
+	--our lua stuff
+	lsb.ui.vgui:AddFunction("lsb", "getServerRules", function(ip, port)
+		print(string.format('lsb.util.fetchServerRules("%s", "%s", function(rules)', ip, port))
+
+		lsb.util.fetchServerRules(ip, port, function(rules)
+			print('aaaa')
+
+			PrintTable(rules)
+
+			lsb.ui.call(string.format(
+				"$scope.serverRules['%s'] = %s;",
+				string.format('%s:%s', ip, port),
+				util.TableToJSON(rules)
+			))
+		end)
+	end)
 end
 
 lsb.ui.call = function(str)

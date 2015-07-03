@@ -3,6 +3,7 @@ var app = angular.module('lsbApp', []);
 app.controller('serverBrowser', function($scope) {
 	$scope.loading = false;
 	$scope.serverResults = [];
+	$scope.serverRules = {};
 	$scope.resultsLength = 0;
 	
 	$scope.loadingBarStyle = function() {
@@ -12,6 +13,12 @@ app.controller('serverBrowser', function($scope) {
 			'width': (frac * 100) + '%',
 			'background': 'hsla(' + Math.ceil(frac * 360) + ', 80%, 60%, 1)'
 		}
+	}
+	
+	$scope.viewServer = function($index) {
+		$scope.curServer = $scope.serverResults[$index];
+		
+		lsb.getServerRules($scope.curServer.ip, $scope.curServer.port);
 	}
 	
 	//settings
