@@ -144,13 +144,37 @@
 
 #serverInfo.open {
 	height:256px;
+	border-top:2px solid #ddd;
+}
+
+#serverInfo.loading {
+	bottom:40px;
 }
 
 #serverInfo div {
 	padding:10px;
 }
 
-#serverInfo p {
+#serverInfo p.header {
+	text-align:center;
+	font-size:14px;
+}
+
+#serverInfo .name {
+	font-weight:bold;
+}
+
+#serverInfo .rules tbody {
+	display:block;
+	overflow-y:scroll;
+	height:180px;
+}
+
+#serverInfo .rules thead tr {
+	display:block;
+}
+
+#serverInfo p.waiting {
 	line-height:40px;
 	font-size:11px;
 	color:#666;

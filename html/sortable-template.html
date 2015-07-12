@@ -1,0 +1,14 @@
+<table class='sortable'>
+	<thead>
+		<tr>
+			<td ng-repeat='col in keys'>
+				<a ng-bind='col'></a>
+			</td>
+		</tr>
+	</thead>
+	<tbody>
+		<tr ng-repeat='row in data'>
+			<td ng-repeat='col in keys' ng-bind='row[col]'></td>
+		</tr>
+	</tbody>
+</table>

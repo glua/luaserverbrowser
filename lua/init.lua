@@ -96,7 +96,7 @@ lsb.getServers = function(options)
 				data.ip = ip
 
 				lsb.ui.call(string.format(
-					'$scope.serverResults.push(%s);',
+					'$scope.serverResults.push({info:%s});',
 					util.TableToJSON(data)
 				))
 
@@ -106,7 +106,7 @@ lsb.getServers = function(options)
 			--lsb.util.print('Server info received!')
 			--lsb.util.print(string.format('%u%% success rate (%u/%u)', (ponged / pinged) * 100, ponged, pinged))
 
-			lsb.ui.call('console.log(JSON.stringify($scope.serverResults));')
+			--lsb.ui.call('console.log(JSON.stringify($scope.serverResults));')
 
 			lsb.ui.call('$scope.loading = false;')
 		end)

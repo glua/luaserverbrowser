@@ -3,7 +3,6 @@ var app = angular.module('lsbApp', []);
 app.controller('serverBrowser', function($scope) {
 	$scope.loading = false;
 	$scope.serverResults = [];
-	$scope.serverRules = {};
 	$scope.resultsLength = 0;
 	
 	$scope.loadingBarStyle = function() {
@@ -18,7 +17,7 @@ app.controller('serverBrowser', function($scope) {
 	$scope.viewServer = function($index) {
 		$scope.curServer = $scope.serverResults[$index];
 		
-		lsb.getServerRules($scope.curServer.ip, $scope.curServer.port);
+		lsb.getServerRules($scope.curServer.info.ip, $scope.curServer.info.port, $index);
 	}
 	
 	//settings
@@ -87,4 +86,22 @@ app.controller('serverBrowser', function($scope) {
 	$scope.fetchServers = function() {
 		
 	}
+});
+
+app.directive('sortable', function() {
+	return {
+		restrict: 'E',
+		templateUrl: 'sortable-template.html',
+		scope: {
+			data: '='
+		},
+		link: function(scope, elem, attr) {
+			scope.keys = {};
+			
+			for(var i = 0; i < scope.data.length; i++)
+				for(var col in scope.data[i])
+					if(row.hasOwnProperty(col))
+						if(!scope.keys[col])
+							scope.keys[col] = true;
+		}
 });

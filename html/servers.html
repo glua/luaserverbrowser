@@ -45,27 +45,54 @@
 
 				<table id="serverResults" class="results" ng-show="serverResults.length">
 					<tr ng-repeat="($index, server) in serverResults" ng-click="viewServer($index)">
-						<td class="icon" ng-class="{pass: server.pass}"></td>
-						<td class="icon" ng-class="{VAC: server.VAC}"></td>
-						<td class="big" ng-bind="server.name"></td>
-						<td class="mid" ng-bind="server.gamemode"></td>
-						<td class="small">{{server.numPlayers}} / {{server.maxPlayers}}</td>
-						<td class="mid" ng-bind="server.map"></td>
-						<td class="small" ng-bind="server.ping"></td>
+						<td class="icon" ng-class="{pass: server.info.pass}"></td>
+						<td class="icon" ng-class="{VAC: server.info.VAC}"></td>
+						<td class="big" ng-bind="server.info.name"></td>
+						<td class="mid" ng-bind="server.info.gamemode"></td>
+						<td class="small">{{server.info.numPlayers}} / {{server.info.maxPlayers}}</td>
+						<td class="mid" ng-bind="server.info.map"></td>
+						<td class="small" ng-bind="server.info.ping"></td>
 					</tr>
 				</table>
 			</div>
 			
-			<div id="serverInfo" ng-class="{open: curServer}">
-				<p ng-hide="curServer">Select a server to see info</p>
+			<div id="serverInfo" ng-class="{open: curServer, offset: loading}">
+				<p class="waiting" ng-hide="curServer">Select a server to see info</p>
 				
 				<div ng-show="curServer">
-					<span ng-bind="curServer.name"></span>
-					<span ng-bind="curServer.gamemode"></span>
+					<p class="header">
+						<span class="name" ng-bind="curServer.info.name"></span>
+						&#45;
+						<span ng-bind="curServer.info.gamemode"></span>
+					</p>
 					
-					<br />
+					<ul class="info">
+						<li></li>
+					</ul>
 					
-					<span>{{serverRules}}</span>
+					<table class="rules">
+						<thead>
+							<tr>
+								<td>Name</td>
+								<td>Value</td>
+							</tr>
+						</thead>
+						<tbody>
+							<tr ng-repeat="(key, val) in curServer.rules">
+								<td ng-bind="key"></td>
+								<td ng-bind="val"></td>
+							</tr>
+						</tbody>
+					</table>
+					
+					<table class="players">
+						<tr>
+							<td>name</td>
+							<td>points</td>
+						</tr>
+					</table>
+					
+					<button class='btn-primary' ng-click="fetchServers()">Join Server</button>
 				</div>
 			</div>
 				

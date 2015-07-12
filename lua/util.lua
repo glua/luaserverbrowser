@@ -137,12 +137,9 @@ local getChallenge = function(ip, port, msg, callback)
 	buff:Write(neg1)
 
 	sock:SendTo(buff, ip, port, function(sock, len, err)
-		print(5)
-
 		if(handleErr(err)) then return end
 
 		sock:ReadFrom(1400, function(sock, host, port, data, err)
-			print(6)
 
 			if(handleErr(err)) then return end
 
