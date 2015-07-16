@@ -23,9 +23,19 @@ lsb.ui.init = function()
 	lsb.ui.vgui:AddFunction("lsb", "getServerRules", function(ip, port, index)
 		lsb.util.fetchServerRules(ip, port, function(rules)
 			lsb.ui.call(string.format(
-				"$scope.serverResults[%s].rules = %s",
+				"$scope.addRules(%s, %s)",
 				index,
 				util.TableToJSON(rules)
+			))
+		end)
+	end)
+
+	lsb.ui.vgui:AddFunction("lsb", "getServerPlayers", function(ip, port, index)
+		lsb.util.fetchServerPlayers(ip, port, function(players)
+			lsb.ui.call(string.format(
+				"$scope.addPlayers(%s, %s)",
+				index,
+				util.TableToJSON(players)
 			))
 		end)
 	end)
@@ -40,7 +50,7 @@ lsb.ui.init = function()
 end
 
 lsb.ui.call = function(str)
-	--lsb.util.print(string.format("running js '%s'", str))
+	lsb.util.print(string.format("running js '%s'", str))
 
 	return lsb.ui.vgui:Call(string.format(
 		[[

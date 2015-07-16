@@ -68,12 +68,6 @@
 		border-collapse:collapse;
 		table-layout:fixed;
 	}
-
-	thead {
-		font-weight:bold;
-		text-align:center !important;
-		text-transform:capitalize;
-	}
 	
 	tbody {
 		position:absolute;
@@ -223,6 +217,20 @@
 		float:left;
 	}
 	
+	.players, .rules {
+		td:nth-of-type(1) {
+			width:61.8%;
+		}
+		
+		td:nth-of-type(2) {
+			text-align:center;
+		}
+		
+		tbody {
+			height:167px;
+		}
+	}
+	
 	.center {
 		width:100%;
 		text-align:center;
@@ -241,11 +249,6 @@
 	}
 }
 
-gamesettings .scrollable {
-	overflow-x:hidden;
-	overflow-y:auto;
-}
-
 ul {
 	padding:0;
 	margin:0;
@@ -255,103 +258,110 @@ li {
 	list-style:none;
 }
 
-gamesettings ul li {
-	display:block;
-	/* line-height:20px; */
-	margin-bottom:8px;
-}
+gamesettings {
+	.scrollable {
+		overflow-x:hidden;
+		overflow-y:auto;
+	}
 
-gamesettings .select label {
-	display:block;
-	border-radius: 3px;
-	height: 28px;
-	padding-left: 10px;
-	line-height: 28px;
-	
-	font-weight: bold;
-	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#5C5), to(#2C2));
-	border: 1px solid #CCC;
-	border-color: #2a2 #2a2 #181;
-	color: white;
-	cursor:pointer;
-	vertical-align: middle;
-	-webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
-}
+	ul li {
+		display:block;
+		/* line-height:20px; */
+		margin-bottom:8px;
+	}
 
-gamesettings .select input[type="checkbox"] {
-	position:absolute;
-	right:10px;
-	top:13px;
-	
-	-webkit-appearance:none;
-	padding:0;
-	cursor:pointer;
-	
-	.dnArrow(white);
-}
+	.select label {
+		display:block;
+		border-radius: 3px;
+		height: 28px;
+		padding-left: 10px;
+		line-height: 28px;
 
-gamesettings .select div {
-	position:absolute;
-	left:0; right:0;
-	z-index:1;
-	background-color:#fff;
-	border-radius:4px;
-	border:1px solid #aaa;
-	font-size:13px;
-	-webkit-box-shadow: 2px 2px 8px rgba( 0, 0, 0, 0.5 );
-}
+		font-weight: bold;
+		background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#5C5), to(#2C2));
+		border: 1px solid #CCC;
+		border-color: #2a2 #2a2 #181;
+		color: white;
+		cursor:pointer;
+		vertical-align: middle;
+		-webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+	}
 
-gamesettings .select a {
-	display:block;
-	color:#000;
-	padding: 4px 15px;
-}
+	.select input[type="checkbox"] {
+		position:absolute;
+		right:10px;
+		top:13px;
 
-gamesettings .select a:hover {
-	background-color: #acf;
-}
+		-webkit-appearance:none;
+		padding:0;
+		cursor:pointer;
 
-gamesettings li label, gamesettings li.label {
-	font-size: 11px;
-	color: #666;
-}
+		.dnArrow(white);
+	}
 
-gamesettings li.label {
-	text-align:center;
-	margin-top:16px;
-}
+	.select div {
+		position:absolute;
+		left:0; right:0;
+		z-index:1;
+		background-color:#fff;
+		border-radius:4px;
+		border:1px solid #aaa;
+		font-size:13px;
+		-webkit-box-shadow: 2px 2px 8px rgba( 0, 0, 0, 0.5 );
+	}
 
-gamesettings .dropdown {
-	margin-bottom:8px;
-}
+	.select a {
+		display:block;
+		color:#000;
+		padding: 4px 15px;
+	}
 
-gamesettings input[type="checkbox"] {
-	position:relative;
-	top:2px;
-	float:right;
-	padding:2px;
-	margin:0;
-}
+	.select a:hover {
+		background-color: #acf;
+	}
 
-gamesettings input[type="text"] {
-	-webkit-box-sizing:border-box;
-	width:100%;
-	padding:4px;
-}
+	li label, li.label {
+		font-size: 11px;
+		color: #666;
+	}
 
-gamesettings li.number {
-	text-align:right;
-	line-height:26px;
-}
+	li.label {
+		text-align:center;
+		margin-top:16px;
+	}
 
-gamesettings li.number label {
-	float:left;
-}
+	.dropdown {
+		margin-bottom:8px;
+	}
 
-gamesettings li.number input {
-	width:68px;
-	padding:2px;
-	height:20px;
+	input[type="checkbox"] {
+		position:relative;
+		top:2px;
+		float:right;
+		padding:2px;
+		margin:0;
+	}
+
+	input[type="text"] {
+		-webkit-box-sizing:border-box;
+		width:100%;
+		padding:4px;
+	}
+
+	li.number {
+		text-align:right;
+		line-height:26px;
+	}
+
+	li.number label {
+		float:left;
+	}
+
+	li.number input {
+		width:68px;
+		padding:2px;
+		height:20px;
+	}
 }
 
 /* sortable directive */
@@ -378,6 +388,10 @@ sortable {
 		box-sizing:border-box;
 		padding-right:17px;
 		color:@linkColor;
+		font-weight:bold;
+		text-align:center;
+		text-transform:capitalize;
+		cursor:pointer;
 	}
 	
 	thead td.active:after {

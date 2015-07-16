@@ -525,6 +525,10 @@ lsb.util.fetchServerRules = function(ip, port, callback)
 	end)
 end
 
+lsb.util.fetchServerPlayers = function(ip, port, callback)
+	
+end
+
 --other public stuff
 
 local version

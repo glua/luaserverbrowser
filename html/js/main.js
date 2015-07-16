@@ -16,9 +16,10 @@ app.controller('serverBrowser', function($scope) {
 	}
 	
 	$scope.viewServer = function($index) {
-		$scope.curServer = $scope.serverResults[$index];
+		var curServer = $scope.curServer = $scope.serverResults[$index];
 		
-		lsb.getServerRules($scope.curServer.info.ip, $scope.curServer.info.port, $index);
+		lsb.getServerRules(curServer.info.ip, curServer.info.port, $index);
+		lsb.getServerPlayers(curServer.info.ip, curServer.info.port, $index);
 	}
 	
 	$scope.joinServer = function(server) {
@@ -37,6 +38,23 @@ app.controller('serverBrowser', function($scope) {
 			map: 		result.info.map,
 			ping: 		result.info.ping
 		});
+	}
+	
+	$scope.addRules = function(index, rules) {
+		console.log('adding rules to [' + index + '] ' + $scope.serverResults[index].info.name);
+		
+		var ret = [];
+		
+		for(var key in rules) {
+			if(rules.hasOwnProperty(key)) {
+				ret.push({
+					key: key,
+					value: rules[key]
+				});
+			}
+		}
+		
+		$scope.serverResults[index].rules = ret;
 	}
 	
 	//settings
