@@ -148,10 +148,13 @@ app.directive('sortable', function($rootScope) {
 
 				scope.data.sort(function(a, b) {
 					var comp = 0;
+					
+					var foo = a[key].toString().toLowerCase();
+					var bar = b[key].toString().toLowerCase();
 
-					if(a[key] > b[key])
+					if(foo > bar)
 						comp = 1;
-					else if(a[key] < b[key])
+					else if(bar > foo)
 						comp = -1;
 
 					return comp * (scope.reverse ? -1 : 1);
