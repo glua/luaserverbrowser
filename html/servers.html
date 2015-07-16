@@ -5,7 +5,7 @@
 
 		<title>Garry's Mod Main Menu</title>
 
-		<!-- existing stuff -->
+		<!-- existing stuff (barf) -->
 		<script type="text/javascript" src="../../../../html/js/lua.js"></script>
 		<script type="text/javascript" src="../../../../html/js/thirdparty/angular.js"></script>
 		
@@ -13,28 +13,16 @@
 		<link rel="stylesheet" type="text/css" href="../../../../html/css/menu/NewGame.css" />
 		
 		<!-- new stuff -->
-		<script src="main.js"></script>
+		<script src="js/main.js"></script>
 		
-		<link rel="stylesheet" type="text/css" href="style.css" />		
+		<link rel="stylesheet/less" type="text/css" href="css/style.less" />
+		
+		<script src="js/less.min.js"></script>
 	</head>
 	
 	<body ng-app="lsbApp" ng-controller="serverBrowser">
-		<div class="maplist">			
-			<div id="resultsHeaders" ng-show="serverResults.length">
-				<table class="results">
-					<tr>
-						<td class="pass icon"></td>
-						<td class="VAC icon"></td>
-						<td class="big">Name</td>
-						<td class="mid">Gamemode</td>
-						<td class="small">Players</td>
-						<td class="mid">Map</td>
-						<td class="small">Ping</td>
-					</tr>
-				</table>
-			</div>
-			
-			<div id="results" class="scrollable" ng-class="{selected: curServer}">
+		<div class="maplist">
+			<div id="content" class="scrollable" ng-class="{selected: curServer}">
 				<div id="noResults" class="centeredbg" ng-show="loading && !serverResults.length">
 					<span class="centered">Fetching results...</span>
 				</div>
@@ -42,18 +30,8 @@
 				<div id="noResults" class="centeredbg" ng-hide="loading || serverResults.length">
 					<span class="centered">No results found &#58;&#40;</span>
 				</div>
-
-				<table id="serverResults" class="results" ng-show="serverResults.length">
-					<tr ng-repeat="($index, server) in serverResults" ng-click="viewServer($index)">
-						<td class="icon" ng-class="{pass: server.info.pass}"></td>
-						<td class="icon" ng-class="{VAC: server.info.VAC}"></td>
-						<td class="big" ng-bind="server.info.name"></td>
-						<td class="mid" ng-bind="server.info.gamemode"></td>
-						<td class="small">{{server.info.numPlayers}} / {{server.info.maxPlayers}}</td>
-						<td class="mid" ng-bind="server.info.map"></td>
-						<td class="small" ng-bind="server.info.ping"></td>
-					</tr>
-				</table>
+				
+				<sortable id="results" object="prettyResults" ng-show="prettyResults.length"></sortable>
 			</div>
 			
 			<div id="serverInfo" ng-class="{open: curServer, offset: loading}">

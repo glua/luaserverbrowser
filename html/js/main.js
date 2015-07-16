@@ -3,10 +3,11 @@ var app = angular.module('lsbApp', []);
 app.controller('serverBrowser', function($scope) {
 	$scope.loading = false;
 	$scope.serverResults = [];
+	$scope.prettyResults = [];
 	$scope.resultsLength = 0;
 	
 	$scope.loadingBarStyle = function() {
-		var frac = $scope.serverResults.length / ($scope.resultsLength || 0);
+		var frac = ($scope.serverResults.length || 0) / ($scope.resultsLength || 0);
 		
 		return {
 			'width': (frac * 100) + '%',
@@ -20,9 +21,21 @@ app.controller('serverBrowser', function($scope) {
 		lsb.getServerRules($scope.curServer.info.ip, $scope.curServer.info.port, $index);
 	}
 	
-	//settings
+	$scope.addResult = function(result) {
+		$scope.serverResults.push(result);
+		
+		$scope.prettyResults.push({
+			pass: 		result.info.pass,
+			VAC: 		result.info.VAC,
+			name: 		result.info.name,
+			gamemode: 	result.info.gamemode,
+			players: 	result.info.numPlayers + '/' + result.info.maxPlayers,
+			map: 		result.info.map,
+			ping: 		result.info.ping
+		});
+	}
 	
-	$scope.settings = {}
+	//settings
 	
 	$scope.settings = {
 		region: {},
@@ -88,20 +101,62 @@ app.controller('serverBrowser', function($scope) {
 	}
 });
 
-app.directive('sortable', function() {
+app.directive('sortable', function($rootScope) {
 	return {
 		restrict: 'E',
 		templateUrl: 'sortable-template.html',
 		scope: {
-			data: '='
+			object: '=',
+			ngShow: '='
 		},
 		link: function(scope, elem, attr) {
-			scope.keys = {};
+			scope.data = [];
+			scope.keys = [];
 			
-			for(var i = 0; i < scope.data.length; i++)
-				for(var col in scope.data[i])
-					if(row.hasOwnProperty(col))
-						if(!scope.keys[col])
-							scope.keys[col] = true;
+			//????			
+			scope.$watch('object', function(data) {
+				scope.data = data;
+				
+				if(data.length) {
+					scope.keys = Object.keys(data[0]);
+					
+					//angular $$hashkey
+					scope.keys.pop();
+				}
+			}, true);
+			
+			//isolated scope breaks ng-show pre 1.3
+			scope.$watch('ngShow', function(val) {
+				if(val)
+					elem[0].style.display = '';
+				else 
+					elem[0].style.display = 'none';
+			});
+			
+			//now for the fun stuff
+			
+			scope.reverse = false;
+			scope.key = '';
+			
+			scope.sortBy = function(key) {
+				if(scope.key === key)
+					scope.reverse = !scope.reverse;
+				else {
+					scope.key = key;
+					scope.reverse = false;
+				}
+
+				scope.data.sort(function(a, b) {
+					var comp = 0;
+
+					if(a[key] > b[key])
+						comp = 1;
+					else if(a[key] < b[key])
+						comp = -1;
+
+					return comp * (scope.reverse ? -1 : 1);
+				});
+			}
 		}
+	}
 });

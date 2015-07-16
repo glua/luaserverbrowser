@@ -1,0 +1,383 @@
+//variables
+@linkColor: #07f;
+
+//rules
+
+.maplist {
+	overflow:hidden;
+}
+
+.centeredbg:before {
+	content:' ';
+	display:inline-block;
+	height:100%;
+	vertical-align:middle;
+	margin-right:-0.25em;
+}
+
+.centered {
+	display:inline-block;
+	vertical-align:middle;
+}
+
+#content {
+	top:0;
+	left:0;
+	bottom:40px;
+	overflow:hidden;
+}
+
+#content.selected {
+	bottom:256px;
+}
+
+#noResults {
+	position:absolute;
+	top:0;
+	right:0;
+	bottom:0;
+	left:0;
+	text-align:center;
+}
+
+.arrow {
+	width:0;
+	height:0;
+	
+	border-right: 5px solid transparent;
+	border-left: 5px solid transparent;
+}
+
+.dnArrow(@color) {
+	.arrow;
+	
+	border-top: 5px solid @color;
+}
+
+.upArrow(@color) {
+	.arrow;
+	
+	border-bottom: 5px solid @color;
+}
+
+#results {
+	width:100%;
+	text-align:center;
+	
+	table {
+		border-collapse:collapse;
+		table-layout:fixed;
+	}
+
+	thead {
+		font-weight:bold;
+		text-align:center !important;
+		text-transform:capitalize;
+	}
+	
+	tbody {
+		position:absolute;
+		top:40px;
+		bottom:0;
+		height:auto;
+	}
+
+	tr {
+		height:40px;
+		line-height:40px;
+		cursor:pointer;
+		border-radius:3px;
+	}
+
+	tbody tr:hover {
+		background:#ccdeff;
+	}
+
+	td {
+		white-space:nowrap;
+		text-overflow:ellipsis;
+		overflow:hidden;
+	}
+	
+	//this is butt ugly
+	
+	td:nth-of-type(1), td:nth-of-type(2) {
+		width:30px;
+		fill:#000;
+		background:center center no-repeat;
+		font-size:0;
+	}
+	
+	thead td:nth-of-type(1) {
+		background-image:url(../img/pass2.png);
+	}
+	
+	tbody td:nth-of-type(1).truthy {
+		background-image:url(../img/pass.png);
+	}
+	
+	thead td:nth-of-type(2) {
+		background-image:url(../img/vac2.png);
+	}
+	
+	tbody td:nth-of-type(2).truthy {
+		background-image:url(../img/vac.png);
+	}
+	
+	tbody td:nth-of-type(3) {
+		text-align:left;
+	}
+	
+	td:nth-of-type(4), td:nth-of-type(6) {
+		width:20%;
+	}
+	
+	td:nth-of-type(5), td:nth-of-type(7) {
+		width:10%;
+	}
+}
+
+#loadingbar {
+	position:absolute;
+	left:0; right:0;
+	bottom:0;
+	height:40px;
+	
+	background:#fff;
+	border-top:1px solid #ddd;
+	border-radius:0 0 5px 5px;
+	line-height:35px;
+	text-align:center;
+	font-size:20px;
+	color:#666;
+	
+	.bar {
+		position:absolute;
+		left:0;
+		bottom:0;
+		height:8px;
+	}
+	
+	#fg {
+		.bar;
+		
+		z-index:1;
+	
+		/* if awesomium ever upgrades :( */
+
+		transition:width 0.1s;
+		border-radius:0 0 0 5px;
+	}
+	
+	#bg {
+		.bar;
+		
+		width:100%;
+
+		background:#ccc;
+		border-radius:0 0 5px 5px;
+	}
+}
+
+#serverInfo {
+	position:absolute;
+	left:0;
+	right:0;
+	bottom:0;
+	height:40px;
+	
+	border-top:1px solid #ddd;
+	
+	&.open {
+		height:256px;
+		border-top:2px solid #ddd;
+	}
+	
+	&.loading {
+		bottom:40px;
+	}
+	
+	div {
+		padding:10px;
+	}
+	
+	p.header {
+		text-align:center;
+		font-size:14px;
+	}
+	
+	.name {
+		font-weight:bold;
+	}
+	
+	p.waiting {
+		margin:0;
+		line-height:40px;
+		font-size:11px;
+		color:#666;
+		text-align:center;
+	}
+}
+
+gamesettings .scrollable {
+	overflow-x:hidden;
+	overflow-y:auto;
+}
+
+ul {
+	padding:0;
+	margin:0;
+}
+
+li {
+	list-style:none;
+}
+
+gamesettings ul li {
+	display:block;
+	/* line-height:20px; */
+	margin-bottom:8px;
+}
+
+gamesettings .select label {
+	display:block;
+	border-radius: 3px;
+	height: 28px;
+	padding-left: 10px;
+	line-height: 28px;
+	
+	font-weight: bold;
+	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#5C5), to(#2C2));
+	border: 1px solid #CCC;
+	border-color: #2a2 #2a2 #181;
+	color: white;
+	cursor:pointer;
+	vertical-align: middle;
+	-webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+gamesettings .select input[type="checkbox"] {
+	position:absolute;
+	right:10px;
+	top:13px;
+	
+	-webkit-appearance:none;
+	padding:0;
+	cursor:pointer;
+	
+	.dnArrow(white);
+}
+
+gamesettings .select div {
+	position:absolute;
+	left:0; right:0;
+	z-index:1;
+	background-color:#fff;
+	border-radius:4px;
+	border:1px solid #aaa;
+	font-size:13px;
+	-webkit-box-shadow: 2px 2px 8px rgba( 0, 0, 0, 0.5 );
+}
+
+gamesettings .select a {
+	display:block;
+	color:#000;
+	padding: 4px 15px;
+}
+
+gamesettings .select a:hover {
+	background-color: #acf;
+}
+
+gamesettings li label, gamesettings li.label {
+	font-size: 11px;
+	color: #666;
+}
+
+gamesettings li.label {
+	text-align:center;
+	margin-top:16px;
+}
+
+gamesettings .dropdown {
+	margin-bottom:8px;
+}
+
+gamesettings input[type="checkbox"] {
+	position:relative;
+	top:2px;
+	float:right;
+	padding:2px;
+	margin:0;
+}
+
+gamesettings input[type="text"] {
+	-webkit-box-sizing:border-box;
+	width:100%;
+	padding:4px;
+}
+
+gamesettings li.number {
+	text-align:right;
+	line-height:26px;
+}
+
+gamesettings li.number label {
+	float:left;
+}
+
+gamesettings li.number input {
+	width:68px;
+	padding:2px;
+	height:20px;
+}
+
+/* sortable directive */
+
+sortable {
+	display:table;
+	
+	table {
+		width:100%;
+		table-layout:fixed;
+	}
+
+	thead, tbody {
+		float:left;
+		width:100%;
+	}
+	
+	tr {
+		display:table;
+		width:100%;
+	}
+	
+	thead {
+		box-sizing:border-box;
+		padding-right:17px;
+		color:@linkColor;
+	}
+	
+	thead td.active:after {
+		display:inline-block;
+		position:relative;
+		content:"";
+		margin-left:10px;
+		vertical-align:middle;
+		top:-2px;
+	}
+	
+	thead td.active:not(.reversed):after {
+		.dnArrow(@linkColor);
+	}
+	
+	thead td.active.reversed:after {
+		.upArrow(@linkColor);
+	}
+	
+	tbody {
+		overflow-y:scroll;
+		height:100%;
+		border-top:1px solid #ddd;
+	}
+}
