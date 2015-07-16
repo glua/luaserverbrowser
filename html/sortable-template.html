@@ -9,8 +9,12 @@
 		</tr>
 	</thead>
 	<tbody>
-		<tr ng-repeat='row in data'>
-			<td ng-repeat='col in keys' ng-bind='row[col]' ng-class="{truthy: !!row[col]}"></td>
+		<tr ng-repeat='row in data'
+			ng-click="click({'$index': row._index});">
+			<td ng-repeat='col in keys'
+				ng-bind='row[col]'
+				ng-class="{truthy: !!row[col]}">
+			</td>
 		</tr>
 	</tbody>
 </table>

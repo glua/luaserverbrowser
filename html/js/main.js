@@ -21,6 +21,10 @@ app.controller('serverBrowser', function($scope) {
 		lsb.getServerRules($scope.curServer.info.ip, $scope.curServer.info.port, $index);
 	}
 	
+	$scope.joinServer = function(server) {
+		lsb.joinServer(server.info.ip, server.info.port);
+	}
+	
 	$scope.addResult = function(result) {
 		$scope.serverResults.push(result);
 		
@@ -107,31 +111,48 @@ app.directive('sortable', function($rootScope) {
 		templateUrl: 'sortable-template.html',
 		scope: {
 			object: '=',
-			ngShow: '='
+			show: '=',
+			click: '&'
 		},
 		link: function(scope, elem, attr) {
 			scope.data = [];
 			scope.keys = [];
 			
+			var badKeys = {'$$hashKey': true, '_index': true}
+			
 			//????			
 			scope.$watch('object', function(data) {
+				if(!data) return;
+				
 				scope.data = data;
 				
 				if(data.length) {
 					scope.keys = Object.keys(data[0]);
+				
+					//add indices
+					if(!data[0]._index) {
+						for(var i = 0; i < data.length; i++) {
+							scope.data[i]._index = i;
+						}
+					}
 					
-					//angular $$hashkey
-					scope.keys.pop();
+					//get rid of our _index and angular's $$hashkey
+					for(var i = scope.keys.length - 1; i > -1; i--) {
+						if(badKeys[scope.keys[i]])
+							scope.keys.splice(i, 1);
+					}
 				}
 			}, true);
 			
 			//isolated scope breaks ng-show pre 1.3
-			scope.$watch('ngShow', function(val) {
-				if(val)
-					elem[0].style.display = '';
-				else 
-					elem[0].style.display = 'none';
-			});
+			if(attr.show) {
+				scope.$watch('show', function(val) {
+					if(val)
+						elem[0].style.display = '';
+					else 
+						elem[0].style.display = 'none';
+				});
+			}
 			
 			//now for the fun stuff
 			

@@ -31,7 +31,7 @@
 					<span class="centered">No results found &#58;&#40;</span>
 				</div>
 				
-				<sortable id="results" object="prettyResults" ng-show="prettyResults.length"></sortable>
+				<sortable id="results" object="prettyResults" click="viewServer($index)" show="prettyResults.length"></sortable>
 			</div>
 			
 			<div id="serverInfo" ng-class="{open: curServer, offset: loading}">
@@ -44,33 +44,17 @@
 						<span ng-bind="curServer.info.gamemode"></span>
 					</p>
 					
+					<sortable class="players" object="curServer.players"></sortable>
+					
+					<sortable class="rules" object="curServer.rules"></sortable>
+					
 					<ul class="info">
-						<li></li>
+						<li>aaa</li>
+						
+						<li class="center bottom">
+							<button class='join btn-primary' ng-click="joinServer(curServer)">Join Server</button>
+						</li>
 					</ul>
-					
-					<table class="rules">
-						<thead>
-							<tr>
-								<td>Name</td>
-								<td>Value</td>
-							</tr>
-						</thead>
-						<tbody>
-							<tr ng-repeat="(key, val) in curServer.rules">
-								<td ng-bind="key"></td>
-								<td ng-bind="val"></td>
-							</tr>
-						</tbody>
-					</table>
-					
-					<table class="players">
-						<tr>
-							<td>name</td>
-							<td>points</td>
-						</tr>
-					</table>
-					
-					<button class='btn-primary' ng-click="fetchServers()">Join Server</button>
 				</div>
 			</div>
 				

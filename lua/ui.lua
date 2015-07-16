@@ -29,6 +29,14 @@ lsb.ui.init = function()
 			))
 		end)
 	end)
+
+	lsb.ui.vgui:AddFunction("lsb", "joinServer", function(ip, port)
+		RawConsoleCommand(string.format(
+			"connect %s:%s",
+			ip,
+			port
+		))
+	end)
 end
 
 lsb.ui.call = function(str)
