@@ -54,7 +54,7 @@ lsb.util = {
 --
 --
 
-if not(pcall(require, 'glsock')) then
+if not(pcall(require, 'glsock2')) then
 	lsb.util.print('GLSock module not found - falling back to serverlist')
 
 	lsb.util.fetchServers = serverlist.Query
