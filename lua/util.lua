@@ -419,6 +419,7 @@ hook.Add("Think", "lsbCoreThink", function()
 
 			if(curCon.stime + lsb.util.timelimit < CurTime()) then
 				--cancel?
+				curCon.sock:Destroy()
 
 				curCon.callback()
 
@@ -441,6 +442,8 @@ hook.Add("Think", "lsbCoreThink", function()
 		--get the bottom of our queue
 		local curServer = table.remove(queue)
 
+		local sock = GLSock(GLSOCK_TYPE_UDP)
+
 		local buff = GLSockBuffer()
 
 		buff:Write(query.info)
@@ -458,25 +461,27 @@ hook.Add("Think", "lsbCoreThink", function()
 				for i = 1, #alive do
 					local curCon = alive[i]
 
-					--we can use our start time to identify this connection because
-					--we only do one connection per frame
-					if(curCon.stime == stime) then
+					--nevermind, just use the ip
+					if(curCon.fullip == curServer.fullip) then
 						table.remove(alive, i)
+
 						break
 					end
 				end
 
+				--this is super unreliable, todo: fix it
 				info.ping = math.floor((CurTime() - stime) * 1000)
 
 				curServer.callback(curServer.fullip, info)
 			end)
 			
 			--make sure we can still interact with this connection
-			table.insert(alive, {
+			alive[#alive + 1] = {
+				fullip = curServer.fullip,
 				stime = stime,
-				--sock = sock, save this until I find out how to cancel connections
+				sock = sock,
 				callback = curServer.callback
-			})
+			}
 		end)
 	end
 end)
