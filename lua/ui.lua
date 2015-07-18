@@ -1,5 +1,37 @@
 lsb.ui = {}
 
+--interacting with lua
+local functions = {
+	getServerRules = function(ip, port, index)
+		lsb.util.fetchServerRules(ip, port, function(rules)
+			lsb.ui.call(string.format(
+				"$scope.addRules(%s, %s)",
+				index,
+				util.TableToJSON(rules)
+			))
+		end)
+	end,
+
+	getServerPlayers = function(ip, port, index)
+		lsb.util.fetchServerPlayers(ip, port, function(players)
+			lsb.ui.call(string.format(
+				"$scope.addPlayers(%s, %s)",
+				index,
+				util.TableToJSON(players)
+			))
+		end)
+	end,
+
+	joinServer = function(ip, port)
+		RawConsoleCommand(string.format(
+			"connect %s:%s",
+			ip,
+			port
+		))
+	end
+}
+
+--make our replacement menu
 lsb.ui.init = function()
 	if(lsb.ui.vgui) then return end
 
@@ -19,38 +51,13 @@ lsb.ui.init = function()
 	--let the browser know our version
 	lsb.ui.call(string.format('$scope.query.master.version_match = "%s";', lsb.util.getVersion()))
 
-	--our lua stuff
-	lsb.ui.vgui:AddFunction("lsb", "getServerRules", function(ip, port, index)
-		lsb.util.fetchServerRules(ip, port, function(rules)
-			lsb.ui.call(string.format(
-				"$scope.addRules(%s, %s)",
-				index,
-				util.TableToJSON(rules)
-			))
-		end)
-	end)
-
-	lsb.ui.vgui:AddFunction("lsb", "getServerPlayers", function(ip, port, index)
-		lsb.util.fetchServerPlayers(ip, port, function(players)
-			lsb.ui.call(string.format(
-				"$scope.addPlayers(%s, %s)",
-				index,
-				util.TableToJSON(players)
-			))
-		end)
-	end)
-
-	lsb.ui.vgui:AddFunction("lsb", "joinServer", function(ip, port)
-		RawConsoleCommand(string.format(
-			"connect %s:%s",
-			ip,
-			port
-		))
-	end)
+	for k, v in pairs(functions) do
+		lsb.ui.vgui:AddFunction("lsb", k, v)
+	end
 end
 
 lsb.ui.call = function(str)
-	lsb.util.print(string.format("running js '%s'", str))
+	--lsb.util.print(string.format("running js '%s'", str))
 
 	return lsb.ui.vgui:Call(string.format(
 		[[

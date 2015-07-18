@@ -191,7 +191,7 @@
 		bottom:40px;
 	}
 	
-	div {
+	.content {
 		padding:10px;
 	}
 	
@@ -215,9 +215,29 @@
 	.players, .rules, .info {
 		width:33.33%;
 		float:left;
+		
+		tbody {
+			height:167px;
+			border-bottom:1px solid #ddd;
+		}
 	}
 	
-	.players, .rules {
+	.players {
+		td:nth-of-type(1) {
+			width:61.8%;
+		}
+		
+		td:nth-of-type(2) {
+			width:19.1%;
+			text-align:center;
+		}
+		
+		td:nth-of-type(3) {
+			text-align:center;
+		}
+	}
+	
+	.rules, .info {
 		td:nth-of-type(1) {
 			width:61.8%;
 		}
@@ -225,24 +245,44 @@
 		td:nth-of-type(2) {
 			text-align:center;
 		}
-		
-		tbody {
-			height:167px;
-		}
 	}
 	
-	.center {
-		width:100%;
-		text-align:center;
+	.info tbody {
+		height:99px;
 	}
 	
-	.bottom {
+	#buttons {
 		position:absolute;
 		width:33.33%;
 		bottom:0;
+		right:0;
+		
+		text-align:center;
+		
+		.refresh {
+			color:@linkColor;
+			text-decoration:none;
+			vertical-align:middle;
+			margin-right:15%;
+			
+			//bootstrap
+			background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#eee), to(#ccc));
+			border: 1px solid #CCC;
+			border-color: #aaa #999 #555;
+			text-shadow: 0 -1px 1px rgba(0, 0, 0, 0.25);
+			border-radius: 6px;
+			cursor: pointer;
+			vertical-align: middle;
+			-webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+
+			&:hover
+			{
+				background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#fff), to(#ccc));
+			}
+		}
 	}
 	
-	.join {
+	.refresh, .join {
 		padding:10px;
 		margin:10px;
 		font-size:20px;

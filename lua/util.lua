@@ -107,10 +107,10 @@ end
 
 --the setup for our master server queries
 --see https://developer.valvesoftware.com/wiki/Master_Server_Query_Protocol
-local buildMessage = function(ip, options)
+local buildMessage = function(ip, region, options)
 	local tab = {
 		0x31,
-		0x00,
+		region,
 		ip or '0.0.0.0:0',
 		0x00
 	}
@@ -221,7 +221,7 @@ local fetchServerInfoCallback = function(sock, callback)
 		if(handleErr(err)) then return end
 
 		--first byte is always going to be 0x54
-		--I think protocal is useless too, and then there's trash right after it
+		--I think protocol is useless too, and then there's trash right after it
 		--so let's just get rid of all of it 
 		data:Clear(6)
 
@@ -369,6 +369,31 @@ local fetchServerRulesCallback = function(sock, callback)
 	end)
 end
 
+local fetchServerPlayersCallback = function(sock, callback)
+	sock:ReadFrom(1400, function(sock, host, port, data, err)
+		if(handleErr(err)) then return end
+
+		--0xFF 0xFF 0xFF 0xFF 0x44
+		data:Clear(5)
+
+		local info = {}
+
+		local numPlayers 	= readBuffer(data, 'Byte')
+
+		for i = 1, numPlayers do
+			local id 		= readBuffer(data, 'Byte')
+
+			info[#info + 1] = {
+				name 		= readBuffer(data, 'String'),
+				score 		= readBuffer(data, 'Long'),
+				time 		= readBuffer(data, 'Float')
+			}
+		end
+
+		callback(info)
+	end)
+end
+
 --
 --	
 --	the public stuff
@@ -456,8 +481,8 @@ hook.Add("Think", "lsbCoreThink", function()
 	end
 end)
 
-lsb.util.fetchServers = function(ip, options, callback)
-	local msg = buildMessage(ip, options or {})
+lsb.util.fetchServers = function(ip, region, options, callback)
+	local msg = buildMessage(ip, region or 0x00, options or {})
 
 	local buff = GLSockBuffer()
 
@@ -526,12 +551,26 @@ lsb.util.fetchServerRules = function(ip, port, callback)
 end
 
 lsb.util.fetchServerPlayers = function(ip, port, callback)
-	
+	getChallenge(ip, port, query.player, function(challenge)
+		local sock = GLSock(GLSOCK_TYPE_UDP)
+
+		local buff = GLSockBuffer()
+
+		buff:Write(query.player)
+		buff:WriteLong(challenge)
+
+		sock:SendTo(buff, ip, port, function(sock, len, err)
+			if(handleErr(err)) then return end
+			
+			fetchServerPlayersCallback(sock, callback)
+		end)
+	end)
 end
 
 --other public stuff
 
 local version
+
 lsb.util.getVersion = function()
 	if not(version) then
 	 	version = (file.Read("steam.inf", "MOD") or ""):match("PatchVersion=(%d-%.%d-%.%d+)")

@@ -15,11 +15,39 @@ app.controller('serverBrowser', function($scope) {
 		}
 	}
 	
+	var serverTypes = {'100': 'Dedicated', '108': 'Listen', '112': 'SourceTV'}
+	var serverEnvs = {'108': 'Linux', '119': 'Windows', '109': 'OSX', '111': 'OSX'}
+	
 	$scope.viewServer = function($index) {
 		var curServer = $scope.curServer = $scope.serverResults[$index];
 		
-		lsb.getServerRules(curServer.info.ip, curServer.info.port, $index);
-		lsb.getServerPlayers(curServer.info.ip, curServer.info.port, $index);
+		console.log($index + ' ' + curServer.info.name + ' ' + curServer.info.ip + ':' + curServer.info.port);
+		
+		if(!curServer.rules) 
+			lsb.getServerRules(curServer.info.ip, curServer.info.port, $index);
+		
+		if(!curServer.players)
+			lsb.getServerPlayers(curServer.info.ip, curServer.info.port, $index);
+		
+		
+		if(!curServer.prettyInfo) {
+			var info = curServer.info;
+			
+			curServer.prettyInfo = [
+				{key: 'VAC enabled', value: !!info.VAC},
+				{key: 'Password protected', value: !!info.pass},
+				{key: 'Players', value: info.numPlayers},
+				{key: 'Bots', value:info.numBots},
+				{key: 'Max players', value: info.maxPlayers},
+				{key: 'Map', value: info.map},
+				{key: 'Ping', value: info.ping},
+				{key: 'Folder', value: info.folder},
+				{key: 'Version', value: info.version},
+				{key: 'App ID', value: info.appid},
+				{key: 'Server type', value: serverTypes[info.type]},
+				{key: 'Server environment', value: serverEnvs[info.env]}
+			];
+		}
 	}
 	
 	$scope.joinServer = function(server) {
@@ -41,8 +69,6 @@ app.controller('serverBrowser', function($scope) {
 	}
 	
 	$scope.addRules = function(index, rules) {
-		console.log('adding rules to [' + index + '] ' + $scope.serverResults[index].info.name);
-		
 		var ret = [];
 		
 		for(var key in rules) {
@@ -54,7 +80,47 @@ app.controller('serverBrowser', function($scope) {
 			}
 		}
 		
+		console.log('>' + index + ' ' + $scope.serverResults[index].info.name + ' ' + $scope.serverResults[index].info.ip + ':' + $scope.serverResults[index].info.port);
+		
 		$scope.serverResults[index].rules = ret;
+	}
+	
+	$scope.addPlayers = function(index, players) {
+		var ret = [];
+		
+		if(players['1']) {
+			for(var id in players) {
+				if(players.hasOwnProperty(id)) {
+					var ply = players[id];
+
+					var info = {
+						name: 	(ply.name.length > 0 ? ply.name : '<Connecting>'),
+						score: 	ply.score
+					}
+
+					var sec = parseFloat(ply.time);
+					var min = sec / 60;
+					var hour = min / 60;
+
+					info.time = 
+						(hour >= 1 ? Math.floor(hour) + 'h ' : '') +
+						(min >= 1 ? (Math.floor(min) % 60) + 'm ' : '') +
+						(Math.floor(sec) % 60) + 's';
+
+					ret.push(info);
+				}
+			}
+		} else {
+			ret = [{
+				name: '',
+				score: '',
+				time: ''
+			}];
+		}
+		
+		console.log('>>' + index + ' ' + $scope.serverResults[index].info.name + ' ' + $scope.serverResults[index].info.ip + ':' + $scope.serverResults[index].info.port);
+		
+		$scope.serverResults[index].players = ret;
 	}
 	
 	//settings

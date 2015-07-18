@@ -37,24 +37,25 @@
 			<div id="serverInfo" ng-class="{open: curServer, offset: loading}">
 				<p class="waiting" ng-hide="curServer">Select a server to see info</p>
 				
-				<div ng-show="curServer">
+				<div class="content" ng-show="curServer">
 					<p class="header">
 						<span class="name" ng-bind="curServer.info.name"></span>
 						&#45;
 						<span ng-bind="curServer.info.gamemode"></span>
+						&#45;
+						<span ng-bind="curServer.info.ip"></span>:<span ng-bind="curServer.info.port"></span>
 					</p>
 					
 					<sortable class="players" object="curServer.players"></sortable>
 					
 					<sortable class="rules" object="curServer.rules"></sortable>
 					
-					<ul class="info">
-						<li>aaa</li>
+					<sortable class="info" object="curServer.prettyInfo"></sortable>
 						
-						<li class="center bottom">
-							<button class='join btn-primary' ng-click="joinServer(curServer)">Join Server</button>
-						</li>
-					</ul>
+					<div id="buttons">
+						<a class='refresh'>Refresh</a>
+						<button class='join btn-primary' ng-click="joinServer(curServer)">Join Server</button>
+					</div>
 				</div>
 			</div>
 				

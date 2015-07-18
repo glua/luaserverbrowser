@@ -41,7 +41,7 @@ function lsb.init()
 	]])
 
 	--the first of our servers
-	lsb.getServers({appid = 4000, version = lsb.util.getVersion()})
+	lsb.getServers(0xFF, {appid = 4000, version = lsb.util.getVersion()})
 
 	--done :)
 	lsb.initialized = true
@@ -57,7 +57,7 @@ hook.Add("GameContentChanged", "lsb.GCC.init", lsb.init)
 --
 --
 
-lsb.getServers = function(options)
+lsb.getServers = function(region, options)
 	lsb.ui.call([[
 		$scope.loading = 1;
 		$scope.serverResults = [];
@@ -65,7 +65,7 @@ lsb.getServers = function(options)
 
 	--lsb.util.print('Requesting master server list...')
 
-	lsb.util.fetchServers(nil, {appid = 4000, version = lsb.util.getVersion()}, function(ips)
+	lsb.util.fetchServers(nil, region, options, function(ips)
 		if not(ips) then
 			--lsb.util.print('Master server list response timed out')
 
