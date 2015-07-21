@@ -21,8 +21,6 @@ app.controller('serverBrowser', function($scope) {
 	$scope.viewServer = function($index) {
 		var curServer = $scope.curServer = $scope.serverResults[$index];
 		
-		console.log($index + ' ' + curServer.info.name + ' ' + curServer.info.ip + ':' + curServer.info.port);
-		
 		if(!curServer.rules) 
 			lsb.getServerRules(curServer.info.ip, curServer.info.port, $index);
 		
@@ -80,8 +78,6 @@ app.controller('serverBrowser', function($scope) {
 			}
 		}
 		
-		console.log('>' + index + ' ' + $scope.serverResults[index].info.name + ' ' + $scope.serverResults[index].info.ip + ':' + $scope.serverResults[index].info.port);
-		
 		$scope.serverResults[index].rules = ret;
 	}
 	
@@ -118,66 +114,76 @@ app.controller('serverBrowser', function($scope) {
 			}];
 		}
 		
-		console.log('>>' + index + ' ' + $scope.serverResults[index].info.name + ' ' + $scope.serverResults[index].info.ip + ':' + $scope.serverResults[index].info.port);
-		
 		$scope.serverResults[index].players = ret;
 	}
 	
 	//settings
 	
 	$scope.settings = {
-		region: {},
+		region: {
+			0x00: 'U.S. East coast',
+			0x01: 'U.S. West coast',
+			0x02: 'South America',
+			0x03: 'Europe',
+			0x04: 'Asia',
+			0x05: 'Australia',
+			0x06: 'Middle East',
+			0x07: 'Africa',
+			0xFF: 'Rest of the world'
+		},
 		query: [
-			['Generic stuff', [
-				['Dedicated', 			'checkbox', 'master', 	'type'],
-				['VAC', 				'checkbox', 'master', 	'secure'],
-				['Server empty', 		'checkbox', 'master', 	'noplayers'],
-				['Server has players', 	'checkbox', 'master', 	'empty'],
-				['Server not full', 	'checkbox', 'master', 	'full'],
-				['Whitelisted', 		'checkbox', 'master', 	'white'],
-			]],
-			['Specific stuff', [
-				['Map', 				'text', 	'master', 	'map'],
-				['Hostname', 			'text', 	'master',	'name_match'],
-				['IP Address', 			'text', 	'master',	'gameaddr']
-			]],
-			['Probably useless', [
-				['Game directory', 		'text', 	'master', 	'gamedir'],
-				['Linux', 				'checkbox', 'master', 	'linux'],
-				['Spectator server', 	'checkbox', 'master', 	'proxy'],
-				['App ID', 				'text', 	'master', 	'appid',		 		true],
-				['Version', 			'text', 	'master', 	'version_match', 		true],
-				['Collapse multiples', 	'checkbox', 'master', 	'collapse_addr_hash']
-			]]
+			{label: 'Generic stuff', 		data: [
+				{label: 'Dedicated', 			type: 'checkbox', 	category: 'master', key: 'type', 				trueValue: 'd'},
+				{label: 'VAC', 					type: 'checkbox', 	category: 'master', key: 'secure'},
+				{label: 'Server empty', 		type: 'checkbox', 	category: 'master', key: 'noplayers'},
+				{label: 'Server has players', 	type: 'checkbox', 	category: 'master', key: 'empty'},
+				{label: 'Server not full', 		type: 'checkbox', 	category: 'master', key: 'full'},
+				{label: 'Whitelisted', 			type: 'checkbox', 	category: 'master', key: 'white'}
+			]},
+			{label: 'Specific stuff', 		data: [
+				{label: 'Map', 					type: 'text', 		category: 'master', key: 'map'},
+				{label: 'Hostname', 			type: 'text', 		category: 'master',	key: 'name_match'},
+				{label: 'IP Address', 			type: 'text', 		category: 'master',	key: 'gameaddr'}
+			]},
+			{label: 'Probably useless', 	data: [
+				{label: 'Game directory', 		type: 'text', 		category: 'master', key: 'gamedir'},
+				{label: 'Linux', 				type: 'checkbox', 	category: 'master', key: 'linux'},
+				{label: 'Spectator server', 	type: 'checkbox', 	category: 'master', key: 'proxy'},
+				{label: 'App ID', 				type: 'text', 		category: 'master', key: 'appid',		 		isNumber: true},
+				{label: 'Version', 				type: 'text', 		category: 'master', key: 'version_match', 		isNumber: true},
+				{label: 'Collapse multiples', 	type: 'checkbox', 	category: 'master', key: 'collapse_addr_hash'}
+			]}
 		]
 	};
 	
-	var c = String.fromCharCode;
-	
-	//sure would have liked to do this inline
-	
-	$scope.settings.region[c(0x00)] = 'U.S. East coast';
-	$scope.settings.region[c(0x01)] = 'U.S. West coast';
-	$scope.settings.region[c(0x02)] = 'South America';
-	$scope.settings.region[c(0x03)] = 'Europe';
-	$scope.settings.region[c(0x04)] = 'Asia';
-	$scope.settings.region[c(0x05)] = 'Australia';
-	$scope.settings.region[c(0x06)] = 'Middle East';
-	$scope.settings.region[c(0x07)] = 'Africa';
-	$scope.settings.region[c(0xFF)] = 'Rest of the world';
-	
 	$scope.setRegion = function(v) {
-		$scope.query.master.region = v;
+		$scope.querySettings.master.region = v;
 		$scope.regionSelect = false;
 	}
 	
 	//the stuff we send to lua 
 	
-	$scope.query = {
+	$scope.querySettings = {
 		master: {
-			region: c(0x00),
-			gamedir: 'garrysmod',
-			appid: 4000
+			region: 			0xFF,
+			
+			type: 				0,
+			secure: 			0,
+			noplayers: 			0,
+			empty:				0,
+			full: 				0,
+			white: 				0,
+			
+			map:				'',
+			name_match: 		'',
+			gameaddr: 			'',
+			
+			gamedir: 			'garrysmod',
+			linux: 				0,
+			proxy: 				0,
+			appid:				4000,
+			version_match: 		'',
+			collapse_addr_hash: 0
 		},
 		server: {
 			
@@ -185,7 +191,11 @@ app.controller('serverBrowser', function($scope) {
 	};
 	
 	$scope.fetchServers = function() {
+		var json = JSON.stringify($scope.query);
 		
+		console.log(json);
+		
+		lsb.getServers(json);
 	}
 });
 

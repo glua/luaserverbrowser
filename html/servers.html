@@ -15,13 +15,17 @@
 		<!-- new stuff -->
 		<script src="js/main.js"></script>
 		
+		<!-- todo: pre-compile this (loading times suck) -->
 		<link rel="stylesheet/less" type="text/css" href="css/style.less" />
+		<link rel="stylesheet/less" type="text/css" href="css/sortable.less" />
 		
 		<script src="js/less.min.js"></script>
 	</head>
 	
 	<body ng-app="lsbApp" ng-controller="serverBrowser">
 		<div class="maplist">
+			{{querySettings}}
+			
 			<div id="content" class="scrollable" ng-class="{selected: curServer}">
 				<div id="noResults" class="centeredbg" ng-show="loading && !serverResults.length">
 					<span class="centered">Fetching results...</span>
@@ -79,11 +83,14 @@
 					</li>
 					
 					<div ng-repeat="group in settings.query">
-						<li class="label" ng-bind="group[0]"></li>
+						<li class="label" ng-bind="group.label"></li>
 						
-						<li ng-repeat="option in group[1]" ng-class="{number: option[4]}">
-							<label ng-bind="option[0]"></label>
-							<input type="{{option[1]}}" ng-model="query[option[2]][option[3]]">
+						<li ng-repeat="option in group.data" ng-class="{number: option.isNumber}">
+							<label ng-bind="option.label"></label>
+							
+							<input type="{{option.type}}"
+								   ng-model="querySettings[option.category][option.key]"
+								   ng-true-value="'{{option.trueValue || 1}}'">
 						</li>
 					</div>
 				</ul>

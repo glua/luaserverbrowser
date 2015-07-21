@@ -40,8 +40,22 @@ function lsb.init()
 		});
 	]])
 
+	lsb.ui.vgui:AddFunction("lsb", "getServers", function(options)
+		options = util.JSONToTable(options)
+
+		PrintTable(options)
+
+		local region = string.char(options.master.region)
+		options.master.region = nil
+
+		lsb.util.printh(region)
+		PrintTable(options)
+
+		lsb.getServers(region, options.master)
+	end)
+
 	--the first of our servers
-	lsb.getServers(0xFF, {appid = 4000, version = lsb.util.getVersion()})
+	--lsb.getServers(0xFF, {appid = 4000, version = lsb.util.getVersion()})
 
 	--done :)
 	lsb.initialized = true
@@ -61,6 +75,8 @@ lsb.getServers = function(region, options)
 	lsb.ui.call([[
 		$scope.loading = 1;
 		$scope.serverResults = [];
+		$scope.prettyResults = [];
+		$scope.resultsLength = 0;
 	]])
 
 	--lsb.util.print('Requesting master server list...')
@@ -77,22 +93,16 @@ lsb.getServers = function(region, options)
 		--lsb.util.print('Master server list received!')
 		--lsb.util.print('Getting server info...')
 
-		local pinged = #ips
-		local ponged = 0
-		local servers = {}
-
 		lsb.ui.call(string.format(
 			[[
 				$scope.loading = 2;
 				$scope.resultsLength = %s;
 			]],
-			pinged
+			#ips
 		))
 
 		lsb.util.fetchServerInfo(ips, function(ip, data) 
 			if(data) then
-				servers[ip] = data
-
 				data.ip = ip
 
 				--this is what's causing errors future me
@@ -101,8 +111,6 @@ lsb.getServers = function(region, options)
 					'$scope.addResult({info:%s});',
 					util.TableToJSON(data)
 				))
-
-				ponged = ponged + 1
 			end
 		end, function()
 			--lsb.util.print('Server info received!')

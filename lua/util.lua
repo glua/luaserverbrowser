@@ -419,7 +419,9 @@ hook.Add("Think", "lsbCoreThink", function()
 
 			if(curCon.stime + lsb.util.timelimit < CurTime()) then
 				--cancel?
-				curCon.sock:Destroy()
+				if(curCon.sock and curCon.sock.Destroy) then
+					curCon.sock:Destroy()
+				end
 
 				curCon.callback()
 
