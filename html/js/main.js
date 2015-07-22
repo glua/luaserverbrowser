@@ -132,38 +132,38 @@ app.controller('serverBrowser', function($scope) {
 			0xFF: 'Rest of the world'
 		},
 		query: [
-			{label: 'Generic stuff', 		data: [
-				{label: 'Dedicated', 			type: 'checkbox', 	category: 'master', key: 'type', 				trueValue: 'd'},
-				{label: 'VAC', 					type: 'checkbox', 	category: 'master', key: 'secure'},
-				{label: 'Server empty', 		type: 'checkbox', 	category: 'master', key: 'noplayers'},
-				{label: 'Server has players', 	type: 'checkbox', 	category: 'master', key: 'empty'},
-				{label: 'Server not full', 		type: 'checkbox', 	category: 'master', key: 'full'},
-				{label: 'Whitelisted', 			type: 'checkbox', 	category: 'master', key: 'white'}
-			]},
-			{label: 'Specific stuff', 		data: [
-				{label: 'Map', 					type: 'text', 		category: 'master', key: 'map'},
-				{label: 'Hostname', 			type: 'text', 		category: 'master',	key: 'name_match'},
-				{label: 'IP Address', 			type: 'text', 		category: 'master',	key: 'gameaddr'}
-			]},
-			{label: 'Probably useless', 	data: [
-				{label: 'Game directory', 		type: 'text', 		category: 'master', key: 'gamedir'},
-				{label: 'Linux', 				type: 'checkbox', 	category: 'master', key: 'linux'},
-				{label: 'Spectator server', 	type: 'checkbox', 	category: 'master', key: 'proxy'},
-				{label: 'App ID', 				type: 'text', 		category: 'master', key: 'appid',		 		isNumber: true},
-				{label: 'Version', 				type: 'text', 		category: 'master', key: 'version_match', 		isNumber: true},
-				{label: 'Collapse multiples', 	type: 'checkbox', 	category: 'master', key: 'collapse_addr_hash'}
-			]}
+			['Generic stuff', [
+				['Dedicated', 			'checkbox', 'master', 	'type',					false,	'd'],
+				['VAC', 				'checkbox', 'master', 	'secure'],
+				['Server empty', 		'checkbox', 'master', 	'noplayers'],
+				['Server has players', 	'checkbox', 'master', 	'empty'],
+				['Server not full', 	'checkbox', 'master', 	'full'],
+				['Whitelisted', 		'checkbox', 'master', 	'white'],
+			]],
+			['Specific stuff', [
+				['Map', 				'text', 	'master', 	'map'],
+				['Hostname', 			'text', 	'master',	'name_match'],
+				['IP Address', 			'text', 	'master',	'gameaddr']
+			]],
+			['Probably useless', [
+				['Game directory', 		'text', 	'master', 	'gamedir'],
+				['Linux', 				'checkbox', 'master', 	'linux'],
+				['Spectator server', 	'checkbox', 'master', 	'proxy'],
+				['App ID', 				'text', 	'master', 	'appid',		 		true],
+				['Version', 			'text', 	'master', 	'version_match', 		true],
+				['Collapse multiples', 	'checkbox', 'master', 	'collapse_addr_hash']
+			]]
 		]
 	};
 	
 	$scope.setRegion = function(v) {
-		$scope.querySettings.master.region = v;
+		$scope.query.master.region = v;
 		$scope.regionSelect = false;
 	}
 	
 	//the stuff we send to lua 
 	
-	$scope.querySettings = {
+	$scope.query = {
 		master: {
 			region: 			0xFF,
 			
@@ -191,7 +191,17 @@ app.controller('serverBrowser', function($scope) {
 	};
 	
 	$scope.fetchServers = function() {
-		var json = JSON.stringify($scope.query);
+		var ret = {
+			master: {},
+			server: {}
+		};
+		
+		for(var cat in $scope.query)
+			for(var key in $scope.query[cat])
+				if($scope.query.master[key])
+					ret.master[key] = $scope.query.master[key];
+
+		var json = JSON.stringify(ret);
 		
 		console.log(json);
 		
@@ -253,6 +263,36 @@ app.directive('sortable', function($rootScope) {
 			scope.reverse = false;
 			scope.key = '';
 			
+			//http://web.archive.org/web/20130826203933/http://my.opera.com/GreyWyvern/blog/show.dml/1671288
+			var chunkify = function(t) {
+				var tz = [], x = 0, y = -1, n = 0, i, j;
+
+				while (i = (j = t.charAt(x++)).charCodeAt(0)) {
+					var m = (i == 46 || (i >=48 && i <= 57));
+					if (m !== n) {
+						tz[++y] = "";
+						n = m;
+					}
+					tz[y] += j;
+				}
+				return tz;
+			}
+			
+			var alphanum = function(a, b) {
+				var aa = chunkify(a.toLowerCase());
+				var bb = chunkify(b.toLowerCase());
+
+				for (x = 0; aa[x] && bb[x]; x++) {
+					if (aa[x] !== bb[x]) {
+						var c = Number(aa[x]), d = Number(bb[x]);
+						if (c == aa[x] && d == bb[x]) {
+							return c - d;
+						} else return (aa[x] > bb[x]) ? 1 : -1;
+					}
+				}
+				return aa.length - bb.length;
+			}
+			
 			scope.sortBy = function(key) {
 				if(scope.key === key)
 					scope.reverse = !scope.reverse;
@@ -262,17 +302,10 @@ app.directive('sortable', function($rootScope) {
 				}
 
 				scope.data.sort(function(a, b) {
-					var comp = 0;
-					
-					var foo = a[key].toString().toLowerCase();
-					var bar = b[key].toString().toLowerCase();
-
-					if(foo > bar)
-						comp = 1;
-					else if(bar > foo)
-						comp = -1;
-
-					return comp * (scope.reverse ? -1 : 1);
+					return alphanum(
+						a[key].toString().toLowerCase(), 
+						b[key].toString().toLowerCase()
+					) * (scope.reverse ? -1 : 1);
 				});
 			}
 		}

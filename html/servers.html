@@ -7,12 +7,14 @@
 
 		<!-- existing stuff (barf) -->
 		<script type="text/javascript" src="../../../../html/js/lua.js"></script>
-		<script type="text/javascript" src="../../../../html/js/thirdparty/angular.js"></script>
+		<!-- <script type="text/javascript" src="../../../../html/js/thirdparty/angular.js"></script> -->
 		
 		<link rel="stylesheet" type="text/css" href="../../../../html/css/menu/Menu.css" />
 		<link rel="stylesheet" type="text/css" href="../../../../html/css/menu/NewGame.css" />
 		
 		<!-- new stuff -->
+		<script src="js/angular.min.js"></script>
+		
 		<script src="js/main.js"></script>
 		
 		<!-- todo: pre-compile this (loading times suck) -->
@@ -23,9 +25,7 @@
 	</head>
 	
 	<body ng-app="lsbApp" ng-controller="serverBrowser">
-		<div class="maplist">
-			{{querySettings}}
-			
+		<div class="maplist">			
 			<div id="content" class="scrollable" ng-class="{selected: curServer}">
 				<div id="noResults" class="centeredbg" ng-show="loading && !serverResults.length">
 					<span class="centered">Fetching results...</span>
@@ -83,14 +83,15 @@
 					</li>
 					
 					<div ng-repeat="group in settings.query">
-						<li class="label" ng-bind="group.label"></li>
+						<li class="label" ng-bind="group[0]"></li>
 						
-						<li ng-repeat="option in group.data" ng-class="{number: option.isNumber}">
-							<label ng-bind="option.label"></label>
+						<li ng-repeat="option in group[1]" ng-class="{number: option[4]}">
+							<label ng-bind="option[0]"></label>
 							
-							<input type="{{option.type}}"
-								   ng-model="querySettings[option.category][option.key]"
-								   ng-true-value="'{{option.trueValue || 1}}'">
+							<input type="{{option[1]}}"
+								   ng-model="query[option[2]][option[3]]"
+								   ng-true-value="'{{option[5] || 1}}'"
+								   ng-false-value="0">
 						</li>
 					</div>
 				</ul>
