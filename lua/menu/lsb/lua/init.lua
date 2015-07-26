@@ -118,11 +118,13 @@ lsb.getServers = function(region, options)
 
 				local passed = true
 
-				for k, v in pairs(options.server) do
-					if not(data[k]:lower():find(v, 0, lsb.cv.filterMode:GetBool())) then
-						passed = false
+				if(options.server) then
+					for k, v in pairs(options.server) do
+						if not(data[k]:lower():find(v, 0, lsb.cv.filterMode:GetBool())) then
+							passed = false
 
-						break
+							break
+						end
 					end
 				end
 
@@ -136,7 +138,7 @@ lsb.getServers = function(region, options)
 			end
 		end, function()
 			dprint(1, 'Server info received!')
-			dprint(1, string.format('%u%% success rate (%u/%u)', (ponged / pinged) * 100, ponged, pinged))
+			dprint(1, string.format('%u%% success rate (%u/%u)', (ponged / #ips) * 100, ponged, #ips))
 
 			--lsb.ui.call('console.log("$scope.addResult(" + JSON.stringify($scope.serverResults[0]) + ")");')
 
