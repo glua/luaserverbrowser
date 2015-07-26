@@ -48,6 +48,10 @@ app.controller('serverBrowser', function($scope) {
 		}
 	}
 	
+	$scope.refreshServer = function() {
+		//todo
+	}
+	
 	$scope.joinServer = function(server) {
 		lsb.joinServer(server.info.ip, server.info.port);
 	}

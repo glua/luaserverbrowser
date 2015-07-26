@@ -57,8 +57,8 @@
 					<sortable class="info" object="curServer.prettyInfo"></sortable>
 						
 					<div id="buttons">
-						<a class='refresh'>Refresh</a>
-						<button class='join btn-primary' ng-click="joinServer(curServer)">Join Server</button>
+						<a class="refresh" ng-click="refreshServer()">Refresh</a>
+						<button class="join btn-primary" ng-click="joinServer(curServer)">Join Server</button>
 					</div>
 				</div>
 			</div>
@@ -98,7 +98,7 @@
 			</div>
 			
 			<bottom>
-				<button class='btn-primary' ng-click="fetchServers()">Find Servers</button>
+				<button class="btn-primary" ng-click="fetchServers()">Find Servers</button>
 			</bottom>
 
 		</gamesettings>
