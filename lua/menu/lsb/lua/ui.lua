@@ -57,7 +57,9 @@ lsb.ui.init = function()
 end
 
 lsb.ui.call = function(str)
-	--lsb.util.print(string.format("running js '%s'", str))
+	if(lsb.cv.debugLevel:GetInt() >= 2) then
+		lsb.util.print(string.format("running js '%s'", str))
+	end
 
 	return lsb.ui.vgui:Call(string.format(
 		[[

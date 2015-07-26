@@ -2,6 +2,7 @@ lsb = {
 	initialized = false
 }
 
+include("convars.lua")
 include("util.lua")
 include("ui.lua")
 
@@ -12,6 +13,12 @@ include("ui.lua")
 --
 
 --GetServers = function(...) print(...) end
+
+local dprint = function(level, ...)
+	if(lsb.cv.debugLevel:GetInt() >= level) then
+		lsb.util.print(...)
+	end
+end
 
 function lsb.init()
 	if(lsb.initialized) then return end
@@ -41,21 +48,22 @@ function lsb.init()
 	]])
 
 	lsb.ui.vgui:AddFunction("lsb", "getServers", function(options)
-		options = util.JSONToTable(options)
+		dprint(1, 'fetching servers with options:\n\t', options)
 
-		PrintTable(options)
+		options = util.JSONToTable(options)
 
 		local region = string.char(options.master.region)
 		options.master.region = nil
 
-		lsb.util.printh(region)
-		PrintTable(options)
+		--options.server.map = string.format('^%s$', options.server.map)
 
-		lsb.getServers(region, options.master)
+		lsb.getServers(region, options)
 	end)
 
-	--the first of our servers
-	--lsb.getServers(0xFF, {appid = 4000, version = lsb.util.getVersion()})
+	if(lsb.cv.autoFetch:GetBool()) then
+		--the first of our servers
+		lsb.getServers(0xFF, {appid = 4000, version = lsb.util.getVersion()})
+	end
 
 	--done :)
 	lsb.initialized = true
@@ -76,22 +84,25 @@ lsb.getServers = function(region, options)
 		$scope.loading = 1;
 		$scope.serverResults = [];
 		$scope.prettyResults = [];
+		$scope.numResults = 0;
 		$scope.resultsLength = 0;
 	]])
 
-	--lsb.util.print('Requesting master server list...')
+	dprint(1, 'Requesting master server list...')
 
-	lsb.util.fetchServers(nil, region, options, function(ips)
+	lsb.util.fetchServers(nil, region, options.master, function(ips)
 		if not(ips) then
-			--lsb.util.print('Master server list response timed out')
+			dprint(1, 'Master server list response timed out')
 
 			lsb.ui.call('$scope.loading = false;')
 
 			return
 		end
 
-		--lsb.util.print('Master server list received!')
-		--lsb.util.print('Getting server info...')
+		dprint(1, 'Master server list received!')
+		dprint(1, string.format('Getting server info for %u servers', #ips))
+
+		local ponged = 0
 
 		lsb.ui.call(string.format(
 			[[
@@ -105,18 +116,29 @@ lsb.getServers = function(region, options)
 			if(data) then
 				data.ip = ip
 
-				--this is what's causing errors future me
+				local passed = true
+
+				for k, v in pairs(options.server) do
+					if not(data[k]:lower():find(v, 0, lsb.cv.filterMode:GetBool())) then
+						passed = false
+
+						break
+					end
+				end
 
 				lsb.ui.call(string.format(
-					'$scope.addResult({info:%s});',
-					util.TableToJSON(data)
+					'$scope.addResult(%s, %s);',
+					(passed and string.format('{info:%s}', util.TableToJSON(data)) or 'undefined'),
+					(passed and 'true' or 'false')
 				))
+
+				ponged = ponged + 1
 			end
 		end, function()
-			--lsb.util.print('Server info received!')
-			--lsb.util.print(string.format('%u%% success rate (%u/%u)', (ponged / pinged) * 100, ponged, pinged))
+			dprint(1, 'Server info received!')
+			dprint(1, string.format('%u%% success rate (%u/%u)', (ponged / pinged) * 100, ponged, pinged))
 
-			lsb.ui.call('console.log("$scope.addResult(" + JSON.stringify($scope.serverResults[0]) + ")");')
+			--lsb.ui.call('console.log("$scope.addResult(" + JSON.stringify($scope.serverResults[0]) + ")");')
 
 			lsb.ui.call('$scope.loading = false;')
 		end)

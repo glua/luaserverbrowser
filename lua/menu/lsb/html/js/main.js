@@ -4,10 +4,11 @@ app.controller('serverBrowser', function($scope) {
 	$scope.loading = false;
 	$scope.serverResults = [];
 	$scope.prettyResults = [];
+	$scope.numResults = 0;
 	$scope.resultsLength = 0;
 	
 	$scope.loadingBarStyle = function() {
-		var frac = ($scope.serverResults.length || 0) / ($scope.resultsLength || 0);
+		var frac = ($scope.numResults || 0) / ($scope.resultsLength || 0);
 		
 		return {
 			'width': (frac * 100) + '%',
@@ -56,18 +57,22 @@ app.controller('serverBrowser', function($scope) {
 		lsb.joinServer(server.info.ip, server.info.port);
 	}
 	
-	$scope.addResult = function(result) {
-		$scope.serverResults.push(result);
+	$scope.addResult = function(result, passed) {
+		$scope.numResults++;
 		
-		$scope.prettyResults.push({
-			pass: 		result.info.pass,
-			VAC: 		result.info.VAC,
-			name: 		result.info.name,
-			gamemode: 	result.info.gamemode,
-			players: 	result.info.numPlayers + '/' + result.info.maxPlayers,
-			map: 		result.info.map,
-			ping: 		result.info.ping
-		});
+		if(passed) {
+			$scope.serverResults.push(result);
+
+			$scope.prettyResults.push({
+				pass: 		result.info.pass,
+				VAC: 		result.info.VAC,
+				name: 		result.info.name,
+				gamemode: 	result.info.gamemode,
+				players: 	result.info.numPlayers + '/' + result.info.maxPlayers,
+				map: 		result.info.map,
+				ping: 		result.info.ping
+			});
+		}
 	}
 	
 	$scope.addRules = function(index, rules) {
@@ -145,9 +150,11 @@ app.controller('serverBrowser', function($scope) {
 				['Whitelisted', 		'checkbox', 'master', 	'white'],
 			]],
 			['Specific stuff', [
-				['Map', 				'text', 	'master', 	'map'],
+				['Map', 				'text', 	'server', 	'map'],
+				['Name', 				'text', 	'server',	'name'],
 				['Hostname', 			'text', 	'master',	'name_match'],
-				['IP Address', 			'text', 	'master',	'gameaddr']
+				['IP Address', 			'text', 	'master',	'gameaddr'],
+				['Gamemode', 			'text', 	'server',	'gamemode']
 			]],
 			['Probably useless', [
 				['Game directory', 		'text', 	'master', 	'gamedir'],
@@ -178,7 +185,7 @@ app.controller('serverBrowser', function($scope) {
 			full: 				0,
 			white: 				0,
 			
-			map:				'',
+			//map:				'', do it ourselves
 			name_match: 		'',
 			gameaddr: 			'',
 			
@@ -190,7 +197,7 @@ app.controller('serverBrowser', function($scope) {
 			collapse_addr_hash: 0
 		},
 		server: {
-			
+			map: 				''
 		}
 	};
 	
@@ -202,12 +209,10 @@ app.controller('serverBrowser', function($scope) {
 		
 		for(var cat in $scope.query)
 			for(var key in $scope.query[cat])
-				if($scope.query.master[key])
-					ret.master[key] = $scope.query.master[key];
+				if($scope.query[cat][key])
+					ret[cat][key] = $scope.query[cat][key];
 
 		var json = JSON.stringify(ret);
-		
-		console.log(json);
 		
 		lsb.getServers(json);
 	}
