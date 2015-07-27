@@ -25,6 +25,10 @@
 	left:0;
 	bottom:40px;
 	overflow:hidden;
+	
+	&.offset #results tbody {
+		bottom:40px;
+	}
 }
 
 #content.selected {
@@ -187,7 +191,7 @@
 		border-top:2px solid #ddd;
 	}
 	
-	&.loading {
+	&.offset {
 		bottom:40px;
 	}
 	
@@ -248,7 +252,7 @@
 	}
 	
 	.info tbody {
-		height:99px;
+		height:112px;
 	}
 	
 	#buttons {
@@ -258,26 +262,18 @@
 		right:0;
 		
 		text-align:center;
-		
+
 		.refresh {
+			background:#fff;
+			border: 1px solid @linkColor;
 			color:@linkColor;
-			text-decoration:none;
-			vertical-align:middle;
-			margin-right:15%;
-			
-			//bootstrap
-			background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#eee), to(#ccc));
-			border: 1px solid #CCC;
-			border-color: #aaa #999 #555;
-			text-shadow: 0 -1px 1px rgba(0, 0, 0, 0.25);
 			border-radius: 6px;
 			cursor: pointer;
 			vertical-align: middle;
-			-webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
-
-			&:hover
-			{
-				background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#fff), to(#ccc));
+			
+			&:hover {
+				border-color:lighten(@linkColor, 15%);
+				color:lighten(@linkColor, 15%);
 			}
 		}
 	}

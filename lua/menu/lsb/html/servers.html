@@ -26,7 +26,7 @@
 	
 	<body ng-app="lsbApp" ng-controller="serverBrowser">
 		<div class="maplist">			
-			<div id="content" class="scrollable" ng-class="{selected: curServer}">
+			<div id="content" class="scrollable" ng-class="{selected: curServer, offset: loading}">
 				<div id="noResults" class="centeredbg" ng-show="loading && !serverResults.length">
 					<span class="centered">Fetching results...</span>
 				</div>
@@ -57,7 +57,7 @@
 					<sortable class="info" object="curServer.prettyInfo"></sortable>
 						
 					<div id="buttons">
-						<a class="refresh" ng-click="refreshServer()">Refresh</a>
+						<button class="refresh" ng-click="refreshServer()">Refresh</button>
 						<button class="join btn-primary" ng-click="joinServer(curServer)">Join Server</button>
 					</div>
 				</div>

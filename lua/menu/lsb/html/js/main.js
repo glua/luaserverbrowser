@@ -50,7 +50,12 @@ app.controller('serverBrowser', function($scope) {
 	}
 	
 	$scope.refreshServer = function() {
-		//todo
+		$scope.curServer.rules = undefined;
+		$scope.curServer.players = undefined;
+		
+		$scope.viewServer($scope.curServer.index);
+		
+		//still todo: refresh basic info (players, map, gamemode(?))
 	}
 	
 	$scope.joinServer = function(server) {
@@ -61,6 +66,8 @@ app.controller('serverBrowser', function($scope) {
 		$scope.numResults++;
 		
 		if(passed) {
+			result.index = $scope.numResults - 1;
+			
 			$scope.serverResults.push(result);
 
 			$scope.prettyResults.push({
@@ -152,16 +159,16 @@ app.controller('serverBrowser', function($scope) {
 			['Specific stuff', [
 				['Map', 				'text', 	'server', 	'map'],
 				['Name', 				'text', 	'server',	'name'],
-				['Hostname', 			'text', 	'master',	'name_match'],
-				['IP Address', 			'text', 	'master',	'gameaddr'],
+				['Hostname*', 			'text', 	'master',	'name_match'],
+				['IP Address*', 		'text', 	'master',	'gameaddr'],
 				['Gamemode', 			'text', 	'server',	'gamemode']
 			]],
 			['Probably useless', [
-				['Game directory', 		'text', 	'master', 	'gamedir'],
+				['Game directory*', 	'text', 	'master', 	'gamedir'],
 				['Linux', 				'checkbox', 'master', 	'linux'],
 				['Spectator server', 	'checkbox', 'master', 	'proxy'],
-				['App ID', 				'text', 	'master', 	'appid',		 		true],
-				['Version', 			'text', 	'master', 	'version_match', 		true],
+				['App ID*', 			'text', 	'master', 	'appid',		 		true],
+				['Version*', 			'text', 	'master', 	'version_match', 		true],
 				['Collapse multiples', 	'checkbox', 'master', 	'collapse_addr_hash']
 			]]
 		]

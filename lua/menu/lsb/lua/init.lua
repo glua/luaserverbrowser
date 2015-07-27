@@ -55,14 +55,12 @@ function lsb.init()
 		local region = string.char(options.master.region)
 		options.master.region = nil
 
-		--options.server.map = string.format('^%s$', options.server.map)
-
 		lsb.getServers(region, options)
 	end)
 
 	if(lsb.cv.autoFetch:GetBool()) then
 		--the first of our servers
-		lsb.getServers(0xFF, {appid = 4000, version = lsb.util.getVersion()})
+		lsb.getServers(0xFF, {master = {appid = 4000, version = lsb.util.getVersion()}})
 	end
 
 	--done :)
@@ -80,6 +78,7 @@ hook.Add("GameContentChanged", "lsb.GCC.init", lsb.init)
 --
 
 lsb.getServers = function(region, options)
+	--init our js variables
 	lsb.ui.call([[
 		$scope.loading = 1;
 		$scope.serverResults = [];
@@ -90,6 +89,7 @@ lsb.getServers = function(region, options)
 
 	dprint(1, 'Requesting master server list...')
 
+	--first arg is the ip to start from, will be for pagination eventually
 	lsb.util.fetchServers(nil, region, options.master, function(ips)
 		if not(ips) then
 			dprint(1, 'Master server list response timed out')
@@ -112,8 +112,10 @@ lsb.getServers = function(region, options)
 			#ips
 		))
 
+		--get the info for all of our ips
 		lsb.util.fetchServerInfo(ips, function(ip, data) 
 			if(data) then
+				--for our own use later
 				data.ip = ip
 
 				local passed = true
@@ -128,6 +130,7 @@ lsb.getServers = function(region, options)
 					end
 				end
 
+				--this code isn't the best
 				lsb.ui.call(string.format(
 					'$scope.addResult(%s, %s);',
 					(passed and string.format('{info:%s}', util.TableToJSON(data)) or 'undefined'),
@@ -147,6 +150,7 @@ lsb.getServers = function(region, options)
 	end)
 end
 
+--will remove this eventually
 concommand.Add('lua_run_menu', function(ply, cmd, args, argstr)
 	RunString(argstr)
 end)
