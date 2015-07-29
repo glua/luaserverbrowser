@@ -42,9 +42,7 @@ lsb.util = {
 		end
 
 		return table.concat(tab)
-	end,
-
-	timelimit = 10
+	end
 }
 
 --
@@ -68,9 +66,6 @@ end
 --
 --
 
---our main sock, we're gonna use it a lot
-local sock = GLSock(GLSOCK_TYPE_UDP)
-
 --all source queries start with -1
 local neg1 = lsb.util.buildBuffer(0xFF, 0xFF, 0xFF, 0xFF)
 
@@ -81,6 +76,43 @@ local query = {
 	rules 	= lsb.util.buildBuffer(neg1, 0x56)
 }
 
+local errs = {
+	[GLSOCK_ERROR_SUCCESS] 						= "GLSOCK_ERROR_SUCCESS",
+	[GLSOCK_ERROR_ACCESSDENIED] 				= "GLSOCK_ERROR_ACCESSDENIED",
+	[GLSOCK_ERROR_ADDRESSFAMILYNOTSUPPORTED] 	= "GLSOCK_ERROR_ADDRESSFAMILYNOTSUPPORTED",
+	[GLSOCK_ERROR_ADDRESSINUSE] 				= "GLSOCK_ERROR_ADDRESSINUSE",
+	[GLSOCK_ERROR_ALREADYCONNECTED] 			= "GLSOCK_ERROR_ALREADYCONNECTED",
+	[GLSOCK_ERROR_ALREADYSTARTED] 				= "GLSOCK_ERROR_ALREADYSTARTED",
+	[GLSOCK_ERROR_BROKENPIPE] 					= "GLSOCK_ERROR_BROKENPIPE",
+	[GLSOCK_ERROR_CONNECTIONABORTED] 			= "GLSOCK_ERROR_CONNECTIONABORTED",
+	[GLSOCK_ERROR_CONNECTIONREFUSED] 			= "GLSOCK_ERROR_CONNECTIONREFUSED",
+	[GLSOCK_ERROR_CONNECTIONRESET] 				= "GLSOCK_ERROR_CONNECTIONRESET",
+	[GLSOCK_ERROR_BADDESCRIPTOR] 				= "GLSOCK_ERROR_BADDESCRIPTOR",
+	[GLSOCK_ERROR_BADADDRESS] 					= "GLSOCK_ERROR_BADADDRESS",
+	[GLSOCK_ERROR_HOSTUNREACHABLE] 				= "GLSOCK_ERROR_HOSTUNREACHABLE",
+	[GLSOCK_ERROR_INPROGRESS] 					= "GLSOCK_ERROR_INPROGRESS",
+	[GLSOCK_ERROR_INTERRUPTED] 					= "GLSOCK_ERROR_INTERRUPTED",
+	[GLSOCK_ERROR_INVALIDARGUMENT] 				= "GLSOCK_ERROR_INVALIDARGUMENT",
+	[GLSOCK_ERROR_MESSAGESIZE] 					= "GLSOCK_ERROR_MESSAGESIZE",
+	[GLSOCK_ERROR_NAMETOOLONG] 					= "GLSOCK_ERROR_NAMETOOLONG",
+	[GLSOCK_ERROR_NETWORKDOWN] 					= "GLSOCK_ERROR_NETWORKDOWN",
+	[GLSOCK_ERROR_NETWORKRESET] 				= "GLSOCK_ERROR_NETWORKRESET",
+	[GLSOCK_ERROR_NETWORKUNREACHABLE] 			= "GLSOCK_ERROR_NETWORKUNREACHABLE",
+	[GLSOCK_ERROR_NODESCRIPTORS] 				= "GLSOCK_ERROR_NODESCRIPTORS",
+	[GLSOCK_ERROR_NOBUFFERSPACE] 				= "GLSOCK_ERROR_NOBUFFERSPACE",
+	[GLSOCK_ERROR_NOMEMORY] 					= "GLSOCK_ERROR_NOMEMORY",
+	[GLSOCK_ERROR_NOPERMISSION] 				= "GLSOCK_ERROR_NOPERMISSION",
+	[GLSOCK_ERROR_NOPROTOCOLOPTION] 			= "GLSOCK_ERROR_NOPROTOCOLOPTION",
+	[GLSOCK_ERROR_NOTCONNECTED] 				= "GLSOCK_ERROR_NOTCONNECTED",
+	[GLSOCK_ERROR_NOTSOCKET] 					= "GLSOCK_ERROR_NOTSOCKET",
+	[GLSOCK_ERROR_OPERATIONABORTED] 			= "GLSOCK_ERROR_OPERATIONABORTED",
+	[GLSOCK_ERROR_OPERATIONNOTSUPPORTED] 		= "GLSOCK_ERROR_OPERATIONNOTSUPPORTED",
+	[GLSOCK_ERROR_SHUTDOWN] 					= "GLSOCK_ERROR_SHUTDOWN",
+	[GLSOCK_ERROR_TIMEDOUT] 					= "GLSOCK_ERROR_TIMEDOUT",
+	[GLSOCK_ERROR_TRYAGAIN] 					= "GLSOCK_ERROR_TRYAGAIN",
+	[GLSOCK_ERROR_WOULDBLOCK] 					= "GLSOCK_ERROR_WOULDBLOCK"
+}
+
 --simple error catching :)
 local handleErr = function(err)
 	if(err ~= GLSOCK_ERROR_SUCCESS) then
@@ -88,7 +120,7 @@ local handleErr = function(err)
 		if(err ~= GLSOCK_ERROR_OPERATIONABORTED) then
 			--this is a real error then, print it 
 
-			lsb.util.print(string.format("GLSock error #%d", err))
+			lsb.util.print(string.format("GLSock error #%d - %s", err, errs[err]))
 		end
 
 		return true
@@ -139,7 +171,7 @@ local getChallenge = function(ip, port, msg, callback)
 	sock:SendTo(buff, ip, port, function(sock, len, err)
 		if(handleErr(err)) then return end
 
-		sock:ReadFrom(1400, function(sock, host, port, data, err)
+		sock:ReadFrom(1500, function(sock, host, port, data, err)
 
 			if(handleErr(err)) then return end
 
@@ -186,7 +218,7 @@ end
 
 local fetchServersCallback = function(sock, callback)
 	--"Steam uses a packet size of 1400 bytes + IP/UDP headers. If a request or response needs more packets for the data it starts the packets with an additional header."
-	sock:ReadFrom(1400, function(sock, host, port, data, err)
+	sock:ReadFrom(1500, function(sock, host, port, data, err)
 		if(handleErr(err)) then return end
 
 		--this is always gonna be 0xFF 0xFF 0xFF 0xFF 0x66 0x0A
@@ -194,7 +226,7 @@ local fetchServersCallback = function(sock, callback)
 
 		local ips = {}
 
-		while(ips[#ips] ~= '0.0.0.0:0') do
+		while(data:Tell() < data:Size()) do
 			ips[#ips + 1] = string.format('%u.%u.%u.%u:%u',
 				readBuffer(data, 'Byte'),
 				readBuffer(data, 'Byte'),
@@ -205,10 +237,10 @@ local fetchServersCallback = function(sock, callback)
 		end
 
 		--pop the last one
-		ips[#ips] = nil;
+		--ips[#ips] = nil;
 
-		sock:Cancel()
-		data:Clear(data:Size())
+		--sock:Cancel()
+		--data:Clear(data:Size())
 
 		callback(ips)
 	end)
@@ -217,7 +249,7 @@ end
 --https://developer.valvesoftware.com/wiki/Server_Queries
 
 local fetchServerInfoCallback = function(sock, callback)
-	sock:ReadFrom(1400, function(sock, host, port, data, err)
+	sock:ReadFrom(1500, function(sock, host, port, data, err)
 		if(handleErr(err)) then return end
 
 		--first byte is always going to be 0x54
@@ -312,7 +344,7 @@ local readRules = function(data, numRules)
 end
 
 local fetchServerRulesCallback = function(sock, callback)
-	sock:ReadFrom(1400, function(sock, host, port, data, err)
+	sock:ReadFrom(1500, function(sock, host, port, data, err)
 		if(handleErr(err)) then return end
 
 		local type = readBuffer(data, 'Long')
@@ -348,7 +380,7 @@ local fetchServerRulesCallback = function(sock, callback)
 				else
 					--gotta read it
 
-					sock:ReadFrom(1400, function(sock, host, port, data, err)
+					sock:ReadFrom(1500, function(sock, host, port, data, err)
 						local num, payload = readPacket(data)
 
 						combined[num + 1] = payload
@@ -370,7 +402,7 @@ local fetchServerRulesCallback = function(sock, callback)
 end
 
 local fetchServerPlayersCallback = function(sock, callback)
-	sock:ReadFrom(1400, function(sock, host, port, data, err)
+	sock:ReadFrom(1500, function(sock, host, port, data, err)
 		if(handleErr(err)) then return end
 
 		--0xFF 0xFF 0xFF 0xFF 0x44
@@ -417,7 +449,7 @@ hook.Add("Think", "lsbCoreThink", function()
 			--always gonna be on top of the stack
 			local curCon = alive[1]
 
-			if(curCon.stime + lsb.util.timelimit < CurTime()) then
+			if(curCon.stime + math.max(lsb.cv.timeLimit:GetInt(), 1) < CurTime()) then
 				--cancel?
 				if(curCon.sock and curCon.sock.Destroy) then
 					curCon.sock:Destroy()
@@ -440,7 +472,7 @@ hook.Add("Think", "lsbCoreThink", function()
 	end
 
 	--start the connection for the next server
-	if(#queue > 0) then
+	if(#queue > 0 and #alive < math.min(math.max(lsb.cv.maxConnections:GetInt(), 1), 100)) then
 		--get the bottom of our queue
 		local curServer = table.remove(queue)
 
@@ -460,6 +492,7 @@ hook.Add("Think", "lsbCoreThink", function()
 			fetchServerInfoCallback(sock, function(info)
 				--if it does, we want to remove this connection from the list of
 				--potentially timed out ones
+
 				for i = 1, #alive do
 					local curCon = alive[i]
 
@@ -476,19 +509,24 @@ hook.Add("Think", "lsbCoreThink", function()
 
 				curServer.callback(curServer.fullip, info)
 			end)
-			
-			--make sure we can still interact with this connection
-			alive[#alive + 1] = {
-				fullip = curServer.fullip,
-				stime = stime,
-				sock = sock,
-				callback = curServer.callback
-			}
 		end)
+
+		--make sure we can still interact with this connection
+		alive[#alive + 1] = {
+			fullip = curServer.fullip,
+			stime = CurTime(),
+			sock = sock,
+			callback = curServer.callback
+		}
 	end
 end)
 
-lsb.util.fetchServers = function(ip, region, options, callback)
+--"Note that whenever you open a new socket (and thus get a new random client port), the Master Server will always send you the first batch of IPs even if you pass a valid game server IP. Do not close your socket between packets."
+lsb.util.fetchServers = function(region, options, callback, ip, sock, level)
+	level = level or 0
+
+	local sock = sock or GLSock(GLSOCK_TYPE_UDP)
+
 	local msg = buildMessage(ip, region or 0x00, options or {})
 
 	local buff = GLSockBuffer()
@@ -498,24 +536,52 @@ lsb.util.fetchServers = function(ip, region, options, callback)
 	sock:SendTo(buff, 'hl2master.steampowered.com', 27011, function(sock, len, err)
 		if(handleErr(err)) then return end
 
+		local ret = {}
+
 		local resolved = false
 
 		fetchServersCallback(sock, function(info)
 			if(resolved) then return end
 			resolved = true
 
-			--cancel timer?
+			for i = 1, #info do
+				ret[#ret + 1] = info[i]
+			end
 
-			callback(info)
+			if(level < math.floor(lsb.cv.serverCount:GetInt() / 231)) then
+				local nestedCallback = function(ret)
+					for i = 2, #info do
+						ret[#ret + 1] = info[i]
+					end
+
+					callback(ret)
+				end
+
+				lsb.util.fetchServers(region, options, nestedCallback, info[#info], sock, level + 1)
+			else
+				callback(info)
+			end
 		end)
 
-		timer.Simple(lsb.util.timelimit, function()
+		timer.Simple(math.max(lsb.cv.timeLimit:GetInt(), 1), function()
 			if(resolved) then return end
 			resolved = true
 
 			sock:Cancel()
 
-			callback()
+			if(#ret < 1 and level == 0) then
+				lsb.util.print("You've been banned from the master server!\n")
+				lsb.util.print("What does this mean?")
+				lsb.util.print("This means that you're unable to get a list of servers for a little bit (only a few minutes!)\n")
+				lsb.util.print("Does this happen often?")
+				lsb.util.print("  You may be trying to get too many servers at once (6k - 7k seems to be the limit)")
+				lsb.util.print("  You may be spamming the 'Find Servers' button in the server browser (this one should be obvious)")
+				lsb.util.print("  You may have a third party addon or application that is also pinging the master server (gl)\n")
+				lsb.util.print("What can you do?")
+				lsb.util.print("Just wait for a little (it's annoying, I know) and you should be good to go!")
+			end
+
+			callback(ret)
 		end)
 	end)
 end
@@ -534,7 +600,16 @@ lsb.util.fetchServerInfo = function(ips, serverCallback, doneCallback)
 		}
 	end
 
+	for i = 1, #alive do
+		local con = alive[i]
+
+		if(con.sock and con.sock.Destroy) then
+			con.sock:Destroy()
+		end
+	end
+
 	queue = ips
+	alive = {}
 	table.Empty(alive) --optimized :)
 	callback = doneCallback
 end

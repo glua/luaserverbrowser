@@ -55,13 +55,14 @@ app.controller('serverBrowser', function($scope) {
 		
 		$scope.viewServer($scope.curServer.index);
 		
-		//still todo: refresh basic info (players, map, gamemode(?))
+		lsb.getServerInfo($scope.curServer.info.ip, $scope.curServer.info.port, $scope.curServer.index);
 	}
 	
 	$scope.joinServer = function(server) {
 		lsb.joinServer(server.info.ip, server.info.port);
 	}
 	
+	/*
 	$scope.addResult = function(result, passed) {
 		$scope.numResults++;
 		
@@ -80,6 +81,29 @@ app.controller('serverBrowser', function($scope) {
 				ping: 		result.info.ping
 			});
 		}
+	}
+	*/
+	
+	$scope.addResults = function(num, results) {
+		for(var i = 0; i < num; i++) {
+			var result = results[i];
+			
+			result.index = $scope.numResults + i;
+
+			$scope.serverResults.push(result);
+
+			$scope.prettyResults.push({
+				pass: 		result.info.pass,
+				VAC: 		result.info.VAC,
+				name: 		result.info.name,
+				gamemode: 	result.info.gamemode,
+				players: 	result.info.numPlayers + '/' + result.info.maxPlayers,
+				map: 		result.info.map,
+				ping: 		result.info.ping
+			});
+		}
+		
+		$scope.numResults += num;
 	}
 	
 	$scope.addRules = function(index, rules) {

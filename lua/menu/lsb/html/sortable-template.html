@@ -1,18 +1,18 @@
-<table class='sortable'>
+<table class="sortable">
 	<thead>
 		<tr>
-			<td ng-repeat='col in keys'
-				ng-bind='col'
+			<td ng-repeat="col in keys"
+				ng-bind="col"
 				ng-click="sortBy(col)"
 				ng-class="{active: (key === col), reversed: reverse}">
 			</td>
 		</tr>
 	</thead>
 	<tbody>
-		<tr ng-repeat='row in data'
+		<tr ng-repeat="row in data"
 			ng-click="click({'$index': row._index});">
-			<td ng-repeat='col in keys'
-				ng-bind='row[col]'
+			<td ng-repeat="col in keys"
+				ng-bind="row[col]"
 				ng-class="{truthy: !!row[col]}">
 			</td>
 		</tr>

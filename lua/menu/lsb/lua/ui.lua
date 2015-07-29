@@ -2,10 +2,22 @@ lsb.ui = {}
 
 --interacting with lua
 local functions = {
+	getServerInfo = function(ip, port, index)
+		lsb.util.fetchServerInfo({string.format('%s:%s', ip, port)}, function(ip, data)
+			data.ip = ip
+			
+			lsb.ui.call(string.format(
+				"$scope.serverResults[%s].info = %s;",
+				index,
+				util.TableToJSON(data)
+			))
+		end)
+	end,
+
 	getServerRules = function(ip, port, index)
 		lsb.util.fetchServerRules(ip, port, function(rules)
 			lsb.ui.call(string.format(
-				"$scope.addRules(%s, %s)",
+				"$scope.addRules(%s, %s);",
 				index,
 				util.TableToJSON(rules)
 			))
@@ -15,7 +27,7 @@ local functions = {
 	getServerPlayers = function(ip, port, index)
 		lsb.util.fetchServerPlayers(ip, port, function(players)
 			lsb.ui.call(string.format(
-				"$scope.addPlayers(%s, %s)",
+				"$scope.addPlayers(%s, %s);",
 				index,
 				util.TableToJSON(players)
 			))

@@ -80,7 +80,7 @@ hook.Add("GameContentChanged", "lsb.GCC.init", lsb.init)
 lsb.getServers = function(region, options)
 	--init our js variables
 	lsb.ui.call([[
-		$scope.loading = 1;
+		$scope.loading = true;
 		$scope.serverResults = [];
 		$scope.prettyResults = [];
 		$scope.numResults = 0;
@@ -89,28 +89,39 @@ lsb.getServers = function(region, options)
 
 	dprint(1, 'Requesting master server list...')
 
-	--first arg is the ip to start from, will be for pagination eventually
-	lsb.util.fetchServers(nil, region, options.master, function(ips)
-		if not(ips) then
-			dprint(1, 'Master server list response timed out')
-
-			lsb.ui.call('$scope.loading = false;')
-
-			return
-		end
-
+	--query the master server
+	lsb.util.fetchServers(region, options.master, function(ips)
 		dprint(1, 'Master server list received!')
 		dprint(1, string.format('Getting server info for %u servers', #ips))
 
+		local pinged = #ips
 		local ponged = 0
 
-		lsb.ui.call(string.format(
-			[[
-				$scope.loading = 2;
-				$scope.resultsLength = %s;
-			]],
-			#ips
-		))
+		lsb.ui.call(string.format('$scope.resultsLength = %s;', #ips))
+
+		local num = 0
+		local batch = {}
+
+		local addResults = function()
+			local str = '['
+
+			for i = 1, #batch do
+				local server = batch[i]
+
+				str = string.format('%s{info:%s},', str, util.TableToJSON(server))
+			end
+
+			str = string.format('%s%s', str:sub(1, -2), ']')
+
+			lsb.ui.call(string.format(
+				'$scope.addResults(%u, %s);',
+				num,
+				str
+			))
+
+			num = 0
+			table.Empty(batch)
+		end
 
 		--get the info for all of our ips
 		lsb.util.fetchServerInfo(ips, function(ip, data) 
@@ -130,18 +141,26 @@ lsb.getServers = function(region, options)
 					end
 				end
 
-				--this code isn't the best
-				lsb.ui.call(string.format(
-					'$scope.addResult(%s, %s);',
-					(passed and string.format('{info:%s}', util.TableToJSON(data)) or 'undefined'),
-					(passed and 'true' or 'false')
-				))
+				num = num + 1
+
+				if(passed) then
+					batch[#batch + 1] = data
+
+					--todo?
+					if(#batch >= math.max(lsb.cv.batchSize:GetInt(), 1)) then
+						addResults()
+					end
+				end
 
 				ponged = ponged + 1
 			end
 		end, function()
+			if(#batch > 0) then
+				addResults()
+			end
+
 			dprint(1, 'Server info received!')
-			dprint(1, string.format('%u%% success rate (%u/%u)', (ponged / #ips) * 100, ponged, #ips))
+			dprint(1, string.format('%u%% success rate (%u/%u)', (ponged / pinged) * 100, ponged, pinged))
 
 			--lsb.ui.call('console.log("$scope.addResult(" + JSON.stringify($scope.serverResults[0]) + ")");')
 
