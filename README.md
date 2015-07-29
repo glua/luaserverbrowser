@@ -1,5 +1,5 @@
 # luaserverbrowser
-## updated legacy server browser 
+### updated legacy server browser 
 
 To install, just put the `lua` folder into your `common/garrysmod/garrysmod` folder.
 
