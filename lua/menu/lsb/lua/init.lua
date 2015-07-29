@@ -178,12 +178,12 @@ http.Fetch("https://api.github.com/repos/glua/luaserverbrowser/commits?sha=maste
 	local commits = util.JSONToTable(body)
 	local headish = commits[2].sha --we can't get the current version cause there'd be no way to check
 
-	local version = '6140a6fb456e058140681c888e5041ea955cdbaf' --I hate that I have to do this manually
+	local version = '761522a560c6a6e88779507345f6d10b6a72d3db' --I hate that I have to do this manually
 
 	if not(version == headish) then
 		lsb.util.print("Update available!")
 		lsb.util.print("There is a new version of LSB available.")
-		lsb.util.print(string.format("Visit https://github.com/glua/luaserverbrowser/%s...%s to see changes.", version, commits[1].sha))
+		lsb.util.print(string.format("Visit https://github.com/glua/luaserverbrowser/compare/%s...%s to see changes.", version, commits[1].sha))
 		lsb.util.print("Visit https://github.com/glua/luaserverbrowser to download.")
 	end
 end, function(err)
