@@ -90,8 +90,8 @@
 							
 							<input type="{{option[1]}}"
 								   ng-model="query[option[2]][option[3]]"
-								   ng-true-value="'{{option[5] || 1}}'"
-								   ng-false-value="0">
+								   ng-true-value="{{option[5] || 1}}"
+								   ng-false-value="{{options[6] || 0}}">
 						</li>
 					</div>
 				</ul>

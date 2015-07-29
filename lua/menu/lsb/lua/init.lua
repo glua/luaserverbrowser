@@ -133,7 +133,7 @@ lsb.getServers = function(region, options)
 
 				if(options.server) then
 					for k, v in pairs(options.server) do
-						if not(data[k]:lower():find(v, 0, lsb.cv.filterMode:GetBool())) then
+						if not(tostring(data[k]):lower():find(v, 0, lsb.cv.filterMode:GetBool())) then
 							passed = false
 
 							break
@@ -146,7 +146,6 @@ lsb.getServers = function(region, options)
 				if(passed) then
 					batch[#batch + 1] = data
 
-					--todo?
 					if(#batch >= math.max(lsb.cv.batchSize:GetInt(), 1)) then
 						addResults()
 					end
@@ -172,4 +171,21 @@ end
 --will remove this eventually
 concommand.Add('lua_run_menu', function(ply, cmd, args, argstr)
 	RunString(argstr)
+end)
+
+--check for updates
+http.Fetch("https://api.github.com/repos/glua/luaserverbrowser/commits?sha=master", function(body)
+	local commits = util.JSONToTable(body)
+	local headish = commits[2].sha --we can't get the current version cause there'd be no way to check
+
+	local version = '6140a6fb456e058140681c888e5041ea955cdbaf' --I hate that I have to do this manually
+
+	if not(version == headish) then
+		lsb.util.print("Update available!")
+		lsb.util.print("There is a new version of LSB available.")
+		lsb.util.print(string.format("Visit https://github.com/glua/luaserverbrowser/%s...%s to see changes.", version, commits[1].sha))
+		lsb.util.print("Visit https://github.com/glua/luaserverbrowser to download.")
+	end
+end, function(err)
+	lsb.util.print("Failed to check for updates!")
 end)

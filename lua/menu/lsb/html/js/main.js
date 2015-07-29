@@ -62,45 +62,25 @@ app.controller('serverBrowser', function($scope) {
 		lsb.joinServer(server.info.ip, server.info.port);
 	}
 	
-	/*
-	$scope.addResult = function(result, passed) {
-		$scope.numResults++;
-		
-		if(passed) {
-			result.index = $scope.numResults - 1;
-			
-			$scope.serverResults.push(result);
-
-			$scope.prettyResults.push({
-				pass: 		result.info.pass,
-				VAC: 		result.info.VAC,
-				name: 		result.info.name,
-				gamemode: 	result.info.gamemode,
-				players: 	result.info.numPlayers + '/' + result.info.maxPlayers,
-				map: 		result.info.map,
-				ping: 		result.info.ping
-			});
-		}
-	}
-	*/
-	
 	$scope.addResults = function(num, results) {
 		for(var i = 0; i < num; i++) {
 			var result = results[i];
 			
-			result.index = $scope.numResults + i;
+			if(result) { //why do I have to check for this?
+				result.index = $scope.numResults + i;
 
-			$scope.serverResults.push(result);
+				$scope.serverResults.push(result);
 
-			$scope.prettyResults.push({
-				pass: 		result.info.pass,
-				VAC: 		result.info.VAC,
-				name: 		result.info.name,
-				gamemode: 	result.info.gamemode,
-				players: 	result.info.numPlayers + '/' + result.info.maxPlayers,
-				map: 		result.info.map,
-				ping: 		result.info.ping
-			});
+				$scope.prettyResults.push({
+					pass: 		result.info.pass,
+					VAC: 		result.info.VAC,
+					name: 		result.info.name,
+					gamemode: 	result.info.gamemode,
+					players: 	result.info.numPlayers + '/' + result.info.maxPlayers,
+					map: 		result.info.map,
+					ping: 		result.info.ping
+				});
+			}
 		}
 		
 		$scope.numResults += num;
@@ -174,6 +154,7 @@ app.controller('serverBrowser', function($scope) {
 		query: [
 			['Generic stuff', [
 				['Dedicated', 			'checkbox', 'master', 	'type',					false,	'd'],
+				['Not private', 		'checkbox', 'server', 	'pass', 				false, 	'0', 		'1'],
 				['VAC', 				'checkbox', 'master', 	'secure'],
 				['Server empty', 		'checkbox', 'master', 	'noplayers'],
 				['Server has players', 	'checkbox', 'master', 	'empty'],
