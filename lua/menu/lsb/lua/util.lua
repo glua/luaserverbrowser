@@ -529,7 +529,7 @@ lsb.util.fetchServers = function(region, options, callback, ip, sock, level)
 					callback(ret)
 				end
 
-				print(ret[#ret], level * 231)
+				--print(ret[#ret], level * 231)
 
 				if(ret[#ret] == '0.0.0.0:0') then
 					return callback(ret)
