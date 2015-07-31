@@ -101,6 +101,7 @@ lsb.getServers = function(region, options)
 
 		local num = 0
 		local batch = {}
+		local time = CurTime()
 
 		local addResults = function()
 			local str = '['
@@ -146,8 +147,11 @@ lsb.getServers = function(region, options)
 				if(passed) then
 					batch[#batch + 1] = data
 
-					if(#batch >= math.max(lsb.cv.batchSize:GetInt(), 1)) then
+					--if(#batch >= math.max(lsb.cv.batchSize:GetInt(), 1)) then
+					if(CurTime() > time + 1) then
 						addResults()
+
+						time = CurTime()
 					end
 				end
 
@@ -178,7 +182,7 @@ http.Fetch("https://api.github.com/repos/glua/luaserverbrowser/commits?sha=maste
 	local commits = util.JSONToTable(body)
 	local headish = commits[2].sha --we can't get the current version cause there'd be no way to check
 
-	local version = '00b1d6807b7bd4d9dbf435fb1702c1274c5f9a6e' --I hate that I have to do this manually
+	local version = '74a045d46982fb3b7cc38347acf9ee98e1ed8983' --I hate that I have to do this manually
 
 	if not(version == headish) then
 		lsb.util.print("Update available!")

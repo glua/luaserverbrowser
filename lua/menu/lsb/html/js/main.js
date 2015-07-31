@@ -222,7 +222,7 @@ app.controller('serverBrowser', function($scope) {
 		for(var cat in $scope.query)
 			for(var key in $scope.query[cat])
 				if($scope.query[cat][key])
-					ret[cat][key] = $scope.query[cat][key];
+					ret[cat][key] = $scope.query[cat][key].toString().toLowerCase();
 
 		var json = JSON.stringify(ret);
 		

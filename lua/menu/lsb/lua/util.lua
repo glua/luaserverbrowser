@@ -106,7 +106,7 @@ end
 
 --separate the parts of an ip
 local sepIP = function(fullip)
-	return fullip:match("(%d+%.%d+%.%d+%.%d+):(%d+)")
+	return fullip:match("([%w-%.]+):(%d+)")
 end
 
 --the setup for our master server queries
