@@ -33,8 +33,8 @@ app.controller('serverBrowser', function($scope) {
 			var info = curServer.info;
 			
 			curServer.prettyInfo = [
-				{key: 'VAC enabled', value: !!info.VAC},
-				{key: 'Password protected', value: !!info.pass},
+				{key: 'VAC enabled', value: !!info.VAC ? "Yes" : "No"},
+				{key: 'Password protected', value: !!info.pass ? "Yes" : "No"},
 				{key: 'Players', value: info.numPlayers},
 				{key: 'Bots', value:info.numBots},
 				{key: 'Max players', value: info.maxPlayers},
