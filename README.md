@@ -11,8 +11,5 @@ commands:
 * `lsb_debug_level 0/1/2` - how much debug info to print
 * `lsb_filter_mode 0/1` - whether or not to use lua patterns for filters (advanced)
 * `lsb_time_limit #` - how long before we assume a server connection timed out
-* `lsb_server_count #` - how many ips to get from the master server
+* `lsb_server_count #` - how many ips to get before slowing down (limit is around 6-7k)
 * `lsb_max_connections #` - how many active sockets to use at a time
-* `lsb_batch_size #` - how many servers to add to the browser at a time
-
-

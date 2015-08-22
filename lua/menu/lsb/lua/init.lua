@@ -1,6 +1,17 @@
 lsb = {
-	initialized = false
+	initialized = false,
+	data = {
+		favorites = {},
+		config = {}
+	}
 }
+
+--our files
+if not(file.Exists("lsb", "DATA")) then
+	file.CreateDir("lsb")
+end
+
+--include("manager.lua")
 
 include("convars.lua")
 include("util.lua")
@@ -12,16 +23,21 @@ include("ui.lua")
 --
 --
 
---GetServers = function(...) print(...) end
-
 local dprint = function(level, ...)
-	if(lsb.cv.debugLevel:GetInt() >= level) then
+	if(lsb.data.config.debugLevel:GetInt() >= level) then
 		lsb.util.print(...)
 	end
 end
 
-function lsb.init()
+local init = function()
 	if(lsb.initialized) then return end
+
+	--our favorites
+	if(file.Exists("lsb/favorites.dat", "DATA")) then
+		for k, v in pairs(string.Explode("\n", file.Read("lsb/favorites.dat", "DATA"))) do
+			lsb.data.favorites[v] = true
+		end
+	end
 
 	--get our vgui ready
 	lsb.ui.init()
@@ -47,27 +63,25 @@ function lsb.init()
 		});
 	]])
 
-	lsb.ui.vgui:AddFunction("lsb", "getServers", function(options)
-		dprint(1, 'fetching servers with options:\n\t', options)
-
-		options = util.JSONToTable(options)
-
-		local region = string.char(options.master.region)
-		options.master.region = nil
-
-		lsb.getServers(region, options)
+	lsb.ui.vgui:AddFunction("lsb", "getServers", function(fullRefresh, region)
+		--avoid creating a table if we have to
+		if(fullRefresh) then
+			lsb.getServers(true, region, {appid = 4000, version = lsb.util.getVersion()})
+		else
+			lsb.getServers()
+		end
 	end)
 
-	if(lsb.cv.autoFetch:GetBool()) then
-		--the first of our servers
-		lsb.getServers(0xFF, {master = {appid = 4000, version = lsb.util.getVersion()}})
+	--the first of our servers
+	if(lsb.data.config.autoFetch:GetBool()) then
+		lsb.getServers(true, 0xFF, {appid = 4000, version = lsb.util.getVersion()})
 	end
 
 	--done :)
 	lsb.initialized = true
 end
 
-hook.Add("GameContentChanged", "lsb.GCC.init", lsb.init)
+hook.Add("GameContentChanged", "lsbInit", init)
 
 --
 --
@@ -77,119 +91,149 @@ hook.Add("GameContentChanged", "lsb.GCC.init", lsb.init)
 --
 --
 
-lsb.getServers = function(region, options)
-	--init our js variables
-	lsb.ui.call([[
-		$scope.loading = true;
-		$scope.serverResults = [];
-		$scope.prettyResults = [];
-		$scope.numResults = 0;
-		$scope.resultsLength = 0;
-	]])
+--setting stuff up for later
+local time = math.huge
+local batch = {}
+local addbatch
 
-	dprint(1, 'Requesting master server list...')
+--this is new and I don't like the way I do it 
+local overflowCallback = function(ips)
+	local data = {}
 
-	--query the master server
-	lsb.util.fetchServers(region, options.master, function(ips)
-		dprint(1, 'Master server list received!')
-		dprint(1, string.format('Getting server info for %u servers', #ips))
+	for i = 1, #ips do
+		local ip = ips[i]
 
-		local pinged = #ips
-		local ponged = 0
+		lsb.masterList[ip] = false
 
-		lsb.ui.call(string.format('$scope.resultsLength = %s;', #ips))
+		data[ip] = false
+	end
 
-		local num = 0
-		local batch = {}
-		local time = CurTime()
+	time = 0
 
-		local addResults = function()
-			local str = '['
-
-			for i = 1, #batch do
-				local server = batch[i]
-
-				str = string.format('%s{info:%s},', str, util.TableToJSON(server))
-			end
-
-			str = string.format('%s%s', str:sub(1, -2), ']')
-
-			lsb.ui.call(string.format(
-				'$scope.addResults(%u, %s);',
-				num,
-				str
-			))
-
-			num = 0
-			table.Empty(batch)
+	lsb.util.fetchServerInfo(data, function(ip, data)
+		if(data) then
+			lsb.masterList[ip] = data
+			batch[#batch + 1] = data
+		end
+	end, function()
+		if(#batch > 0) then
+			addbatch()
 		end
 
+		time = math.huge
+	end)
+end
+
+lsb.getServers = function(fullRefresh, region, options)
+	--either way we gotta redo the html part, so let's get ready
+	lsb.ui.call("$scope.serverResults = []; $scope.prettyResults = [];")
+
+	--only do this if we have to (faster)
+	if(not lsb.masterList or fullRefresh) then
+		dprint(1, "Requesting master server list...")
+
+		lsb.util.fetchServers(region, options, function(ips)
+			dprint(1, "Master server list received!")
+
+			lsb.masterList = {}
+
+			for k, v in pairs(lsb.data.favorites) do
+				lsb.masterList[k] = false
+			end
+
+			for k, v in pairs(ips) do
+				lsb.masterList[v] = false
+			end
+
+			--try again
+			lsb.getServers(false)
+		end, overflowCallback)
+
+		return
+	end
+
+	--assume that we can prepare to send stuff
+	time = 0
+	batch = {}
+
+	--we don't need to do this, assume that if the function is called we want a quick refresh
+
+	--[[
+	--same thing
+	local gotinfo = false
+
+	for k, v in pairs(lsb.masterList) do
+		if(v) then
+			gotinfo = true
+			break
+		end
+	end
+
+	if(not gotinfo or options.refreshType == 1) then ]]
+
+		local pinged = table.Count(lsb.masterList)
+		local ponged = 0
+
+		dprint(1, string.format("Getting server info for %u servers", pinged))
+
 		--get the info for all of our ips
-		lsb.util.fetchServerInfo(ips, function(ip, data) 
+		lsb.util.fetchServerInfo(lsb.masterList, function(ip, data) 
 			if(data) then
-				--for our own use later
-				data.ip = ip
+				if(lsb.data.favorites[ip]) then
+					print(data.name)
 
-				local passed = true
-
-				if(options.server) then
-					for k, v in pairs(options.server) do
-						if not(tostring(data[k]):lower():find(v, 0, lsb.cv.filterMode:GetBool())) then
-							passed = false
-
-							break
-						end
-					end
+					data.favorite = true
 				end
 
-				num = num + 1
-
-				if(passed) then
-					batch[#batch + 1] = data
-
-					--if(#batch >= math.max(lsb.cv.batchSize:GetInt(), 1)) then
-					if(CurTime() > time + 1) then
-						addResults()
-
-						time = CurTime()
-					end
-				end
+				lsb.masterList[ip] = data
+				batch[#batch + 1] = data
 
 				ponged = ponged + 1
 			end
 		end, function()
-			if(#batch > 0) then
-				addResults()
-			end
-
 			dprint(1, 'Server info received!')
 			dprint(1, string.format('%u%% success rate (%u/%u)', (ponged / pinged) * 100, ponged, pinged))
 
-			--lsb.ui.call('console.log("$scope.addResult(" + JSON.stringify($scope.serverResults[0]) + ")");')
+			if(#batch > 0) then
+				addbatch()
+			end
 
-			lsb.ui.call('$scope.loading = false;')
+			time = math.huge
+
+			options.refreshType = false
+
+			--try again for a THIRD time
+			--lsb.getServers(region, options)
 		end)
-	end)
+
+		time = 0
+	--end
 end
 
---will remove this eventually
-concommand.Add('lua_run_menu', function(ply, cmd, args, argstr)
-	RunString(argstr)
-end)
+--sending servers to html
+addbatch = function()
+	local str = ""
 
---check for updates
-http.Fetch("https://api.github.com/repos/glua/luaserverbrowser/commits?sha=master", function(body)
-	local commits = util.JSONToTable(body)
-	local headish = commits[2].sha --we can't get the current version cause there'd be no way to check
+	for i = 1, #batch do
+		local server = batch[i]
 
-	local version = '74a045d46982fb3b7cc38347acf9ee98e1ed8983' --I hate that I have to do this manually
-
-	if not(version == headish) then
-		lsb.util.print("Update available!")
-		lsb.util.print("There is a new version of LSB available.")
-		lsb.util.print(string.format("Visit https://github.com/glua/luaserverbrowser/compare/%s...%s to see changes.", version, commits[1].sha))
-		lsb.util.print("Visit https://github.com/glua/luaserverbrowser to download.")
+		str = string.format("%s{info:%s,favorite:%s},", str, util.TableToJSON(server), server.favorite and "true" or "false")
 	end
-end, function(err)
-	lsb.util.print("Failed to check for updates!")
-end)
+
+	str = string.format("[%s]", str:sub(1, -2))
+
+	lsb.ui.call(string.format("$scope.addResults(%s);", str))
+
+	table.Empty(batch)
+end
+
+--only once a second
+local think = function()
+	if(CurTime() > time + 1 and #batch > 0) then
+		addbatch()
+
+		time = CurTime()
+	end
+end
+
+hook.Add("Think", "lsb.think", think)

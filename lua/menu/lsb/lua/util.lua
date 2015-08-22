@@ -48,14 +48,12 @@ lsb.util = {
 --
 --
 --	our setup
---	todo: use serverlist.query if module not found
+--	edit: who cares
 --
 --
 
 if not(pcall(require, 'glsock2')) then
-	lsb.util.print('GLSock module not found - falling back to serverlist')
-
-	lsb.util.fetchServers = serverlist.Query
+	lsb.util.print('GLSock module not found!')
 
 	return
 end
@@ -87,11 +85,11 @@ end
 
 --simple error catching :)
 local handleErr = function(err)
-	if(err ~= GLSOCK_ERROR_SUCCESS) then
+	if not(err == GLSOCK_ERROR_SUCCESS) then
 		--make sure we didn't throw it
-		if(err ~= GLSOCK_ERROR_OPERATIONABORTED) then
+		--edit: bad descriptors are just from tabbing out, who cares
+		if not(err == GLSOCK_ERROR_OPERATIONABORTED or err == GLSOCK_ERROR_BADDESCRIPTOR) then
 			--this is a real error then, print it 
-
 			lsb.util.print(string.format("GLSock error #%d - %s", err, errs[err]))
 		end
 
@@ -295,9 +293,6 @@ local readPacket = function(data)
 
 	local str = readBuffer(data, '', packetLength)
 
-	--print(packetNum)
-	--lsb.util.printh(str)
-
 	return packetNum, str, numRules
 end
 
@@ -322,10 +317,7 @@ local fetchServerRulesCallback = function(sock, callback)
 		local type = readBuffer(data, 'Long')
 
 		if(type == 0xFFFFFFFF) then
-			--single packet
-
-			--todo
-
+			--single packet, this probably won't happen
 			return
 		else
 			--split packet
@@ -337,64 +329,122 @@ local fetchServerRulesCallback = function(sock, callback)
 
 			local combined = {}
 			local numRead = 1
-			local numRules
 
-			for i = 0, numPackets do
-				if(i == 0) then
-					--we already have our first packet
+			--we already have our first packet
+			local num, payload, rules = readPacket(data)
+			
+			local numRules = rules
 
-					local num, payload, rules = readPacket(data)
+			--we have to use 1 indexing to play nice with table.concat
+			combined[1] = payload
 
-					numRules = rules
+			for i = 1, numPackets do
+				--gotta read it
 
-					--we have to use 1 indexing to play nice with table.concat
+				sock:ReadFrom(1500, function(sock, host, port, data, err)
+					if not(data) then return end
+
+					local num, payload = readPacket(data)
+
 					combined[num + 1] = payload
-				else
-					--gotta read it
 
-					sock:ReadFrom(1500, function(sock, host, port, data, err)
-						local num, payload = readPacket(data)
+					numRead = numRead + 1
 
-						combined[num + 1] = payload
+					if(numRead == numPackets) then
+						local buff = GLSockBuffer()
 
-						numRead = numRead + 1
+						buff:Write(table.concat(combined))
 
-						if(numRead == numPackets) then
-							local buff = GLSockBuffer()
-
-							buff:Write(table.concat(combined))
-
-							callback(readRules(buff, numRules))
-						end
-					end)
-				end
+						callback(readRules(buff, numRules))
+					end
+				end)
 			end
 		end
 	end)
+end
+
+local readPlayers = function(data, numPlayers)
+	local info = {}
+
+	for i = 1, numPlayers do
+		local id
+
+		if(i > 1) then
+			--good thing this is useless to us
+			id 			= readBuffer(data, 'Byte')
+		end
+
+		info[#info + 1] = {
+			name 		= readBuffer(data, 'String'),
+			score 		= readBuffer(data, 'Long'),
+			time 		= readBuffer(data, 'Float')
+		}
+
+		--stupid negative scores
+		if(info[#info].score > 2 ^ 31) then
+			info[#info].score = info[#info].score - 2 ^ 32
+		end
+	end
+
+	return info
 end
 
 local fetchServerPlayersCallback = function(sock, callback)
 	sock:ReadFrom(1500, function(sock, host, port, data, err)
 		if(handleErr(err)) then return end
 
-		--0xFF 0xFF 0xFF 0xFF 0x44
-		data:Clear(5)
+		local type = readBuffer(data, 'Long')
 
-		local info = {}
+		if(type == 0xFFFFFFFF) then
+			--we got a single packet, easy mode
+			--0x44
+			data:Clear(1)
 
-		local numPlayers 	= readBuffer(data, 'Byte')
+			local numPlayers = readBuffer(data, 'Byte')
 
-		for i = 1, numPlayers do
-			local id 		= readBuffer(data, 'Byte')
+			--first id, breaks multi packets
+			data:Clear(1)
 
-			info[#info + 1] = {
-				name 		= readBuffer(data, 'String'),
-				score 		= readBuffer(data, 'Long'),
-				time 		= readBuffer(data, 'Float')
-			}
+			callback(readPlayers(data, numPlayers))
+		else
+			--multi packet
+			local id 			= readBuffer(data, 'Long')
+			local numPackets 	= readBuffer(data, 'Byte')
+
+			data:Seek(0, GLSOCKBUFFER_SEEK_SET)
+
+			local combined = {}
+			local numRead = 1
+
+			local num, payload, players = readPacket(data)
+			
+			local numPlayers = players
+
+			combined[1] = payload
+
+			for i = 1, numPackets do
+				sock:ReadFrom(1500, function(sock, host, port, data, err)
+					local num, payload = readPacket(data)
+
+					combined[num + 1] = payload
+
+					numRead = numRead + 1
+
+					if(numRead == numPackets) then
+						local buff = GLSockBuffer()
+
+						buff:Write(table.concat(combined))
+
+						buff:Seek(0, GLSOCKBUFFER_SEEK_SET)
+
+						callback(readPlayers(buff, numPlayers))
+					end
+				end)
+			end
+
+			--data:Seek(0, GLSOCKBUFFER_SEEK_SET)
+			--lsb.util.printh(readBuffer(data, '', data:Size()))
 		end
-
-		callback(info)
 	end)
 end
 
@@ -421,7 +471,7 @@ hook.Add("Think", "lsbCoreThink", function()
 			--always gonna be on top of the stack
 			local curCon = alive[1]
 
-			if(curCon.stime + math.max(lsb.cv.timeLimit:GetInt(), 1) < CurTime()) then
+			if(curCon.stime + math.max(lsb.data.config.timeLimit:GetInt(), 1) < CurTime()) then
 				--cancel?
 				if(curCon.sock and curCon.sock.Destroy) then
 					curCon.sock:Destroy()
@@ -444,7 +494,7 @@ hook.Add("Think", "lsbCoreThink", function()
 	end
 
 	--start the connection for the next server
-	if(#queue > 0 and #alive < math.min(math.max(lsb.cv.maxConnections:GetInt(), 1), 100)) then
+	if(#queue > 0 and #alive < math.min(math.max(lsb.data.config.maxConnections:GetInt(), 1), 100)) then
 		--get the bottom of our queue
 		local curServer = table.remove(queue)
 
@@ -476,7 +526,11 @@ hook.Add("Think", "lsbCoreThink", function()
 					end
 				end
 
-				--this is super unreliable, todo: fix it
+				--for our own use later
+				info.fullip = curServer.fullip
+				info.ip = curServer.ip
+
+				--this is good enough now that we use separate sockets
 				info.ping = math.floor((CurTime() - stime) * 1000)
 
 				curServer.callback(curServer.fullip, info)
@@ -493,9 +547,16 @@ hook.Add("Think", "lsbCoreThink", function()
 	end
 end)
 
+local lastFetched = 0
+
+--you probably won't ever have to include ip, sock, level, or ranAt
 --"Note that whenever you open a new socket (and thus get a new random client port), the Master Server will always send you the first batch of IPs even if you pass a valid game server IP. Do not close your socket between packets."
-lsb.util.fetchServers = function(region, options, callback, ip, sock, level)
-	level = level or 0
+lsb.util.fetchServers = function(region, options, callback, overflow, ip, sock, level, ranAt)
+	if not(level) then
+		level = 0
+		lastFetched = CurTime()
+		ranAt = lastFetched
+	end
 
 	local sock = sock or GLSock(GLSOCK_TYPE_UDP)
 
@@ -508,7 +569,10 @@ lsb.util.fetchServers = function(region, options, callback, ip, sock, level)
 	sock:SendTo(buff, 'hl2master.steampowered.com', 27011, function(sock, len, err)
 		if(handleErr(err)) then return end
 
-		local ret = {}
+		if not(lastFetched == ranAt) then
+			dprint(1, "server fetch aborted")
+			return
+		end
 
 		local resolved = false
 
@@ -516,40 +580,50 @@ lsb.util.fetchServers = function(region, options, callback, ip, sock, level)
 			if(resolved) then return end
 			resolved = true
 
-			for i = 1, #info do
-				ret[#ret + 1] = info[i]
-			end
+			--this is confusing
+			local diff = level - math.floor(lsb.data.config.serverCount:GetInt() / 231)
 
-			if(level < math.floor(lsb.cv.serverCount:GetInt() / 231)) then
-				local nestedCallback = function(ret)
-					for i = 2, #info do
-						ret[#ret + 1] = info[i]
+			--if we're still waiting to do our main callback
+			if(diff < 0) then
+				lsb.util.fetchServers(region, options, function(nestedInfo)
+					for i = 2, #nestedInfo do
+						info[#info + 1] = nestedInfo[i]
 					end
 
-					callback(ret)
-				end
+					callback(info)
+				end, overflow, info[#info], sock, level + 1, lastFetched)
 
-				--print(ret[#ret], level * 231)
-
-				if(ret[#ret] == '0.0.0.0:0') then
-					return callback(ret)
-				end
-
-				timer.Simple(0, function()
-					lsb.util.fetchServers(region, options, nestedCallback, info[#info], sock, level + 1)
-				end)
+				return
 			else
-				callback(info)
+				--the first ip is the last ip of the previous batch
+				table.remove(info, 1)
+
+				if(diff == 0) then
+					--end of our main servers
+					callback(info)
+				else
+					--send overflow servers back immediately
+					overflow(info)
+				end
 			end
+
+			--if we've reached the end (I don't think this is neeeded for the main callback, you'll probably get banned before this ever happens)
+			--worst case scenario, you'll get every server twice
+			if(info[#info] == '0.0.0.0:0') then return end
+
+			timer.Simple(6, function()
+				lsb.util.fetchServers(region, options, nil, overflow, info[#info], sock, level + 1, lastFetched)
+			end)
 		end)
 
-		timer.Simple(math.max(lsb.cv.timeLimit:GetInt(), 1), function()
+		--todo, not use timers for timeouts
+		timer.Simple(math.max(lsb.data.config.timeLimit:GetInt(), 1), function()
 			if(resolved) then return end
 			resolved = true
 
 			sock:Cancel()
 
-			if(#ret < 1 and level == 0) then
+			if(level == 0) then
 				lsb.util.print("You've been banned from the master server!\n")
 				lsb.util.print("What does this mean?")
 				lsb.util.print("This means that you're unable to get a list of servers for a little bit (only a few minutes!)\n")
@@ -561,19 +635,21 @@ lsb.util.fetchServers = function(region, options, callback, ip, sock, level)
 				lsb.util.print("Just wait for a little (it's annoying, I know) and you should be good to go!")
 			end
 
-			callback(ret)
+			if(callback) then
+				callback({})
+			end
 		end)
 	end)
 end
 
-lsb.util.fetchServerInfo = function(ips, serverCallback, doneCallback)
-	for i = 1, #ips do
-		local fullip = ips[i]
+lsb.util.fetchServerInfo = function(masterlist, serverCallback, doneCallback)
+	local ips = {}
 
+	for fullip, v in pairs(masterlist) do
 		local ip, port = sepIP(fullip)
 
-		ips[i] = {
-			fullip = ip,
+		ips[#ips + 1] = {
+			fullip = fullip,
 			ip = ip,
 			port = port and tonumber(port) or 27015,
 			callback = serverCallback
@@ -631,6 +707,7 @@ end
 
 --other public stuff
 
+--thanks man with hat!
 local version
 
 lsb.util.getVersion = function()

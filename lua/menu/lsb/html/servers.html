@@ -7,7 +7,6 @@
 
 		<!-- existing stuff (barf) -->
 		<script type="text/javascript" src="../../../../html/js/lua.js"></script>
-		<!-- <script type="text/javascript" src="../../../../html/js/thirdparty/angular.js"></script> -->
 		
 		<link rel="stylesheet" type="text/css" href="../../../../html/css/menu/Menu.css" />
 		<link rel="stylesheet" type="text/css" href="../../../../html/css/menu/NewGame.css" />
@@ -16,29 +15,33 @@
 		<script src="js/angular.min.js"></script>
 		
 		<script src="js/main.js"></script>
+		<script src="js/sortable.js"></script>
 		
-		<!-- todo: pre-compile this (loading times suck) -->
-		<link rel="stylesheet/less" type="text/css" href="css/style.less" />
-		<link rel="stylesheet/less" type="text/css" href="css/sortable.less" />
+		<link rel="stylesheet/less" type="text/css" href="css/style.css" />
+		<link rel="stylesheet/less" type="text/css" href="css/sortable.css" />
 		
-		<script src="js/less.min.js"></script>
+		<!-- <script src="js/less.min.js"></script> don't need this anymore :) -->
 	</head>
 	
 	<body ng-app="lsbApp" ng-controller="serverBrowser">
-		<div class="maplist">			
-			<div id="content" class="scrollable" ng-class="{selected: curServer, offset: loading}">
-				<div id="noResults" class="centeredbg" ng-show="loading && !serverResults.length">
-					<span class="centered">Fetching results...</span>
-				</div>
+		<div id="tabs">
+			<label ng-class="{active: curTab == num}" ng-repeat="(num, tab) in tabs">
+				{{tab}}
 
-				<div id="noResults" class="centeredbg" ng-hide="loading || serverResults.length">
+				<input type="radio" ng-model="$parent.curTab" ng-value="num">
+			</label>
+		</div>
+		
+		<div class="maplist">			
+			<div id="content" class="scrollable" ng-class="{selected: curServer}">
+				<div id="noResults" class="centeredbg" ng-hide="serverResults.length">
 					<span class="centered">No results found &#58;&#40;</span>
 				</div>
 				
-				<sortable id="results" object="prettyResults" click="viewServer($index)" show="prettyResults.length"></sortable>
+				<sortable id="results" object="prettyResults" click="viewServer($index)" dbl-click="joinServer($index)" show="prettyResults.length" filter="filterServers($index)"></sortable>
 			</div>
 			
-			<div id="serverInfo" ng-class="{open: curServer, offset: loading}">
+			<div id="serverInfo" ng-class="{open: curServer}">
 				<p class="waiting" ng-hide="curServer">Select a server to see info</p>
 				
 				<div class="content" ng-show="curServer">
@@ -57,24 +60,19 @@
 					<sortable class="info" object="curServer.prettyInfo"></sortable>
 						
 					<div id="buttons">
+						<button class="refresh" ng-click="favoriteServer(!curServer.favorite)">{{curServer.favorite ? "Unf" : "F"}}avorite</button>
 						<button class="refresh" ng-click="refreshServer()">Refresh</button>
-						<button class="join btn-primary" ng-click="joinServer(curServer)">Join Server</button>
+						<button class="join btn-primary" ng-click="joinServer(curServer.index)">Join Server</button>
 					</div>
 				</div>
-			</div>
-				
-			<div id="loadingbar" ng-show="loading">
-				<div id="label">{{numResults}} / {{resultsLength}}</div>
-				<div id="fg" ng-style="loadingBarStyle()"></div>
-				<div id="bg"></div>
 			</div>
 		</div>
 
 		<gamesettings>
-			<div class="scrollable" style="margin: 10px; bottom: 65px; top: 0px">
+			<div class="scrollable" style="margin: 10px; bottom: 130px; top: 0px">
 				<ul>
 					<li class="select">
-						<label for="regionSelect" ng-bind="settings.region[query.master.region]"></label>
+						<label for="regionSelect" ng-bind="settings.region[region]"></label>
 						<input type="checkbox" id="regionSelect" ng-model="regionSelect">
 						
 						<div ng-show="regionSelect">
@@ -83,22 +81,28 @@
 					</li>
 					
 					<div ng-repeat="group in settings.query">
-						<li class="label" ng-bind="group[0]"></li>
+						<li class="label" ng-bind="group.l"></li>
 						
-						<li ng-repeat="option in group[1]" ng-class="{number: option[4]}">
-							<label ng-bind="option[0]"></label>
+						<li ng-repeat="option in group.d" ng-class="{number: option.n}">
+							<label ng-bind="option.l"></label>
 							
-							<input type="{{option[1]}}"
-								   ng-model="query[option[2]][option[3]]"
-								   ng-true-value="{{option[5] || 1}}"
-								   ng-false-value="{{options[6] || 0}}">
+							<input type="{{option.t}}"
+								ng-model="serverFilter[option.k]"
+								ng-true-value="{{option.tv || 1}}"
+								ng-false-value="{{option.fv || 0}}"
+								ng-if="option.t != 'tristate'">
+							
+							<tristate ng-model="serverFilter[option.k]"
+								ng-if="option.t == 'tristate'">
+							</tristate>
 						</li>
 					</div>
 				</ul>
 			</div>
 			
 			<bottom>
-				<button class="btn-primary" ng-click="fetchServers()">Find Servers</button>
+				<button id="quick" class="btn-primary" ng-click="fetchServers()">Quick Refresh</button>
+				<button class="btn-primary" ng-click="fetchServers(true)">Full Refresh</button>
 			</bottom>
 
 		</gamesettings>

@@ -1,0 +1,10 @@
+# less
+*.less
+less.min.js
+
+#images
+*.svg
+*.ai
+
+#lua
+manager.lua

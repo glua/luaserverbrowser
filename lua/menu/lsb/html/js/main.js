@@ -1,20 +1,11 @@
 var app = angular.module('lsbApp', []);
 
 app.controller('serverBrowser', function($scope) {
-	$scope.loading = false;
+	$scope.tabs = ['Internet', 'Favorites']; //, 'Local'];
+	$scope.curTab = 0;
+	
 	$scope.serverResults = [];
 	$scope.prettyResults = [];
-	$scope.numResults = 0;
-	$scope.resultsLength = 0;
-	
-	$scope.loadingBarStyle = function() {
-		var frac = ($scope.numResults || 0) / ($scope.resultsLength || 0);
-		
-		return {
-			'width': (frac * 100) + '%',
-			'background': 'hsla(' + Math.ceil(frac * 360) + ', 80%, 60%, 1)'
-		}
-	}
 	
 	var serverTypes = {'100': 'Dedicated', '108': 'Listen', '112': 'SourceTV'}
 	var serverEnvs = {'108': 'Linux', '119': 'Windows', '109': 'OSX', '111': 'OSX'}
@@ -33,57 +24,60 @@ app.controller('serverBrowser', function($scope) {
 			var info = curServer.info;
 			
 			curServer.prettyInfo = [
-				{key: 'VAC enabled', value: !!info.VAC},
-				{key: 'Password protected', value: !!info.pass},
-				{key: 'Players', value: info.numPlayers},
-				{key: 'Bots', value:info.numBots},
-				{key: 'Max players', value: info.maxPlayers},
-				{key: 'Map', value: info.map},
-				{key: 'Ping', value: info.ping},
-				{key: 'Folder', value: info.folder},
-				{key: 'Version', value: info.version},
-				{key: 'App ID', value: info.appid},
-				{key: 'Server type', value: serverTypes[info.type]},
+				{key: 'VAC enabled', 		value: info.VAC ? "Yes" : "No"},
+				{key: 'Password protected', value: info.pass ? "Yes" : "No"},
+				{key: 'Players', 			value: info.numPlayers},
+				{key: 'Bots', 				value: info.numBots},
+				{key: 'Max players', 		value: info.maxPlayers},
+				{key: 'Map', 				value: info.map},
+				{key: 'Ping', 				value: info.ping},
+				{key: 'Folder', 			value: info.folder},
+				{key: 'Version', 			value: info.version},
+				{key: 'App ID', 			value: info.appid},
+				{key: 'Server type', 		value: serverTypes[info.type]},
 				{key: 'Server environment', value: serverEnvs[info.env]}
 			];
 		}
 	}
 	
-	$scope.refreshServer = function() {
-		$scope.curServer.rules = undefined;
-		$scope.curServer.players = undefined;
-		
-		$scope.viewServer($scope.curServer.index);
-		
-		lsb.getServerInfo($scope.curServer.info.ip, $scope.curServer.info.port, $scope.curServer.index);
+	$scope.favoriteServer = function(fave) {
+		lsb.favoriteServer($scope.curServer.info.ip + ':' + $scope.curServer.info.port, fave);
 	}
 	
-	$scope.joinServer = function(server) {
+	$scope.refreshServer = function() {
+		var index = $scope.curServer.index;
+		
+		$scope.serverResults[index].rules = undefined;
+		$scope.serverResults[index].players = undefined;
+		
+		lsb.getServerInfo($scope.curServer.info.ip, $scope.curServer.info.port, index);
+		
+		$scope.viewServer(index);
+	}
+	
+	$scope.joinServer = function($index) {
+		var server = $scope.serverResults[$index];
+		
 		lsb.joinServer(server.info.ip, server.info.port);
 	}
 	
-	$scope.addResults = function(num, results) {
-		for(var i = 0; i < num; i++) {
+	$scope.addResults = function(results) {
+		for(var i = 0; i < results.length; i++) {
 			var result = results[i];
 			
-			if(result) { //why do I have to check for this?
-				result.index = $scope.numResults + i;
+			//weird, but it works
+			result.index = $scope.serverResults.push(result) - 1;
 
-				$scope.serverResults.push(result);
-
-				$scope.prettyResults.push({
-					pass: 		result.info.pass,
-					VAC: 		result.info.VAC,
-					name: 		result.info.name,
-					gamemode: 	result.info.gamemode,
-					players: 	result.info.numPlayers + '/' + result.info.maxPlayers,
-					map: 		result.info.map,
-					ping: 		result.info.ping
-				});
-			}
+			$scope.prettyResults[result.index] = {
+				pass: 		result.info.pass,
+				VAC: 		result.info.VAC,
+				name: 		result.info.name,
+				gamemode: 	result.info.gamemode,
+				players: 	result.info.numPlayers + '/' + result.info.maxPlayers,
+				map: 		result.info.map,
+				ping: 		result.info.ping
+			};
 		}
-		
-		$scope.numResults += num;
 	}
 	
 	$scope.addRules = function(index, rules) {
@@ -152,183 +146,114 @@ app.controller('serverBrowser', function($scope) {
 			0xFF: 'Rest of the world'
 		},
 		query: [
-			['Generic stuff', [
-				['Dedicated', 			'checkbox', 'master', 	'type',					false,	'd'],
-				['Not private', 		'checkbox', 'server', 	'pass', 				false, 	'0', 		'1'],
-				['VAC', 				'checkbox', 'master', 	'secure'],
-				['Server empty', 		'checkbox', 'master', 	'noplayers'],
-				['Server has players', 	'checkbox', 'master', 	'empty'],
-				['Server not full', 	'checkbox', 'master', 	'full'],
-				['Whitelisted', 		'checkbox', 'master', 	'white'],
-			]],
-			['Specific stuff', [
-				['Map', 				'text', 	'server', 	'map'],
-				['Name', 				'text', 	'server',	'name'],
-				['Hostname*', 			'text', 	'master',	'name_match'],
-				['IP Address*', 		'text', 	'master',	'gameaddr'],
-				['Gamemode', 			'text', 	'server',	'gamemode']
-			]],
-			['Probably useless', [
-				['Game directory*', 	'text', 	'master', 	'gamedir'],
-				['Linux', 				'checkbox', 'master', 	'linux'],
-				['Spectator server', 	'checkbox', 'master', 	'proxy'],
-				['App ID*', 			'text', 	'master', 	'appid',		 		true],
-				['Version*', 			'text', 	'master', 	'version_match', 		true],
-				['Collapse multiples', 	'checkbox', 'master', 	'collapse_addr_hash']
-			]]
+			{l: 'Generic stuff', d: [
+				{l: 'Dedicated', 			t: 'tristate', 	k: 'type', 					tv: '100'},
+				{l: 'Private', 				t: 'checkbox', 	k: 'pass'},
+				{l: 'VAC', 					t: 'checkbox', 	k: 'VAC'},
+				{l: 'Server empty', 		t: 'checkbox', 	k: 'noplayers'},
+				{l: 'Server has players', 	t: 'checkbox', 	k: 'empty'},
+				{l: 'Server not full', 		t: 'checkbox', 	k: 'full'}
+				//{l: 'Tags', 				t: 'text', 		k: 'tags'}
+				//{l: 'Whitelisted', 			t: 'checkbox', 	k: 'white'}
+			]},
+			{l: 'Specific stuff', d: [
+				{l: 'Map', 					t: 'text', 		k: 'map'},
+				{l: 'Name', 				t: 'text', 		k: 'name'},
+				//{l: 'Hostname', 			t: 'text', 		k: 'name_match'},
+				{l: 'IP Address', 			t: 'text', 		k: 'fullip'},
+				{l: 'Gamemode', 			t: 'text', 		k: 'gamemode'}
+			]},
+			{l: 'Probably useless', d: [
+				{l: 'Game directory', 		t: 'text', 		k: 'folder'},
+				{l: 'Linux', 				t: 'checkbox', 	k: 'env',					tv: '108'},
+				//{l: 'Spectator server', 	t: 'checkbox', 	k: 'proxy'},
+				{l: 'App ID', 				t: 'text', 		k: 'appid', 				n: true},
+				{l: 'Steam ID', 			t: 'text', 		k: 'steamID', 				n: true},
+				{l: 'Version', 				t: 'text', 		k: 'version', 				n: true}
+				//{l: 'Collapse multiples', 	t: 'checkbox', 	k: 'collapse_addr_hash'}
+			]}
 		]
 	};
 	
+	$scope.region = 0xFF;
+	
 	$scope.setRegion = function(v) {
-		$scope.query.master.region = v;
+		$scope.region = v;
 		$scope.regionSelect = false;
 	}
 	
-	//the stuff we send to lua 
+	$scope.serverFilter = {
+		folder: 'garrysmod',
+		appid: '4000'
+	}
 	
-	$scope.query = {
-		master: {
-			region: 			0xFF,
-			
-			type: 				0,
-			secure: 			0,
-			noplayers: 			0,
-			empty:				0,
-			full: 				0,
-			white: 				0,
-			
-			//map:				'', do it ourselves
-			name_match: 		'',
-			gameaddr: 			'',
-			
-			gamedir: 			'garrysmod',
-			linux: 				0,
-			proxy: 				0,
-			appid:				4000,
-			version_match: 		'',
-			collapse_addr_hash: 0
-		},
-		server: {
-			map: 				''
-		}
-	};
-	
-	$scope.fetchServers = function() {
-		var ret = {
-			master: {},
-			server: {}
-		};
+	//filtering
+	$scope.filterServers = function($index) {
+		//gotta love how 0 == false :)
+		if(typeof($index) !== 'number') return;
 		
-		for(var cat in $scope.query)
-			for(var key in $scope.query[cat])
-				if($scope.query[cat][key])
-					ret[cat][key] = $scope.query[cat][key].toString().toLowerCase();
+		var filter = $scope.serverFilter;
+		var server = $scope.serverResults[$index];
+		
+		if(!server) return true;
+		
+		var shouldShow = true;
 
-		var json = JSON.stringify(ret);
+		for(var key in filter) {
+			if(filter.hasOwnProperty(key)) {
+				var filterVal = filter[key];
+				var serverVal = server.info[key];
+				
+				var passed = true;
+
+				if(typeof(filterVal) == 'string')
+					passed = serverVal.toString().toLowerCase().indexOf(filterVal.toLowerCase()) > -1;
+				else
+					passed = serverVal == filterVal;
+
+				if(!passed) {
+					shouldShow = false;
+					break
+				}
+			}
+		}
 		
-		lsb.getServers(json);
+		if(shouldShow && $scope.curTab == 1)
+			shouldShow = server.favorite;
+
+		return !shouldShow;
+	}
+	
+	$scope.fetchServers = function(full) {
+		lsb.getServers(full, $scope.region);
 	}
 });
 
-app.directive('sortable', function($rootScope) {
+app.directive('tristate', function($parse) {
 	return {
 		restrict: 'E',
-		templateUrl: 'sortable-template.html',
-		scope: {
-			object: '=',
-			show: '=',
-			click: '&'
-		},
-		link: function(scope, elem, attr) {
-			scope.data = [];
-			scope.keys = [];
+		template: '<label ng-class="{t:val()===true,f:val()===false}"><input type="checkbox" ng-click="click(this)"></label>',
+		require: '^ngModel',
+		link: function(scope, elem, attr, ctrl) {
+			var get = $parse(attr.ngModel);
+			var set = get.assign;
 			
-			var badKeys = {'$$hashKey': true, '_index': true}
-			
-			//????			
-			scope.$watch('object', function(data) {
-				if(!data) return;
-				
-				scope.data = data;
-				
-				if(data.length) {
-					scope.keys = Object.keys(data[0]);
-				
-					//add indices
-					if(!data[0]._index) {
-						for(var i = 0; i < data.length; i++) {
-							scope.data[i]._index = i;
-						}
-					}
-					
-					//get rid of our _index and angular's $$hashkey
-					for(var i = scope.keys.length - 1; i > -1; i--) {
-						if(badKeys[scope.keys[i]])
-							scope.keys.splice(i, 1);
-					}
-				}
-			}, true);
-			
-			//isolated scope breaks ng-show pre 1.3
-			if(attr.show) {
-				scope.$watch('show', function(val) {
-					if(val)
-						elem[0].style.display = '';
-					else 
-						elem[0].style.display = 'none';
-				});
+			scope.val = function() {
+				return get(scope);
 			}
 			
-			//now for the fun stuff
-			
-			scope.reverse = false;
-			scope.key = '';
-			
-			//http://web.archive.org/web/20130826203933/http://my.opera.com/GreyWyvern/blog/show.dml/1671288
-			var chunkify = function(t) {
-				var tz = [], x = 0, y = -1, n = 0, i, j;
-
-				while (i = (j = t.charAt(x++)).charCodeAt(0)) {
-					var m = (i == 46 || (i >=48 && i <= 57));
-					if (m !== n) {
-						tz[++y] = "";
-						n = m;
-					}
-					tz[y] += j;
-				}
-				return tz;
-			}
-			
-			var alphanum = function(a, b) {
-				var aa = chunkify(a.toLowerCase());
-				var bb = chunkify(b.toLowerCase());
-
-				for (x = 0; aa[x] && bb[x]; x++) {
-					if (aa[x] !== bb[x]) {
-						var c = Number(aa[x]), d = Number(bb[x]);
-						if (c == aa[x] && d == bb[x]) {
-							return c - d;
-						} else return (aa[x] > bb[x]) ? 1 : -1;
-					}
-				}
-				return aa.length - bb.length;
-			}
-			
-			scope.sortBy = function(key) {
-				if(scope.key === key)
-					scope.reverse = !scope.reverse;
-				else {
-					scope.key = key;
-					scope.reverse = false;
-				}
-
-				scope.data.sort(function(a, b) {
-					return alphanum(
-						a[key].toString().toLowerCase(), 
-						b[key].toString().toLowerCase()
-					) * (scope.reverse ? -1 : 1);
-				});
+			scope.click = function() {
+				set(scope, click(elem[0].children[0].children[0]));
 			}
 		}
 	}
 });
+
+var click = function(cb) {
+	if(cb.readOnly)
+		cb.checked = cb.readOnly = false;
+	else if(!cb.checked)
+		cb.readOnly = cb.indeterminate = true;
+
+	return cb.indeterminate ? undefined : cb.checked;
+}

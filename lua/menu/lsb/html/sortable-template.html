@@ -10,7 +10,9 @@
 	</thead>
 	<tbody>
 		<tr ng-repeat="row in data"
-			ng-click="click({'$index': row._index});">
+			ng-hide="filter({'$index': row._index})"
+			ng-click="click({'$index': row._index})"
+			ng-dblclick="dblClick({'$index': row._index})">
 			<td ng-repeat="col in keys"
 				ng-bind="row[col]"
 				ng-class="{truthy: !!row[col]}">

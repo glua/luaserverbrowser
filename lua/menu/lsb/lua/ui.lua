@@ -3,8 +3,8 @@ lsb.ui = {}
 --interacting with lua
 local functions = {
 	getServerInfo = function(ip, port, index)
-		lsb.util.fetchServerInfo({string.format('%s:%s', ip, port)}, function(ip, data)
-			data.ip = ip
+		lsb.util.fetchServerInfo({[string.format('%s:%s', ip, port)] = false}, function(ip, data)
+			--data.ip = ip
 			
 			lsb.ui.call(string.format(
 				"$scope.serverResults[%s].info = %s;",
@@ -40,7 +40,41 @@ local functions = {
 			ip,
 			port
 		))
+	end,
+
+	favoriteServer = function(fullip, fave)
+		print(fullip, fave)
+
+		lsb.data.favorites[fullip] = fave or nil
+
+		local str = ""
+		local tab = "{"
+
+		for k, v in pairs(lsb.data.favorites) do
+			str = string.format("%s%s\n", str, k)
+			tab = string.format("%s'%s':true,", tab, k)
+		end
+
+		file.Write("lsb/favorites.dat", str:sub(1, -2))
+
+		lsb.ui.call(string.format([[
+				var faves = %s;
+
+				for(var i = 0; i < $scope.serverResults.length; i++) {
+					var server = $scope.serverResults[i];
+
+					server.favorite = faves[server.info.ip + ':' + server.info.port];
+
+					//console.log(server.info.ip + ':' + server.info.port + ' ' + server.favorite);
+
+					//if(server.favorite)
+					//	console.log(JSON.stringify(server));
+				}
+			]],
+			string.format("%s}", tab:sub(1, -2))
+		))
 	end
+
 }
 
 --make our replacement menu
@@ -61,7 +95,7 @@ lsb.ui.init = function()
 	lsb.ui.vgui:SetVisible(false)
 
 	--let the browser know our version
-	lsb.ui.call(string.format('$scope.query.master.version_match = "%s";', lsb.util.getVersion()))
+	lsb.ui.call(string.format("$scope.serverFilter.version = '%s';", lsb.util.getVersion()))
 
 	for k, v in pairs(functions) do
 		lsb.ui.vgui:AddFunction("lsb", k, v)
@@ -69,12 +103,11 @@ lsb.ui.init = function()
 end
 
 lsb.ui.call = function(str)
-	if(lsb.cv.debugLevel:GetInt() >= 2) then
+	if(lsb.data.config.debugLevel:GetInt() >= 2) then
 		lsb.util.print(string.format("running js '%s'", str))
 	end
 
-	return lsb.ui.vgui:Call(string.format(
-		[[
+	return lsb.ui.vgui:Call(string.format([[
 			var $scope = angular.element(document.getElementsByTagName('body')[0]).scope();
 
 			$scope.$apply(function() {
