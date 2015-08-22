@@ -43,8 +43,6 @@ local functions = {
 	end,
 
 	favoriteServer = function(fullip, fave)
-		print(fullip, fave)
-
 		lsb.data.favorites[fullip] = fave or nil
 
 		local str = ""

@@ -148,11 +148,11 @@ app.controller('serverBrowser', function($scope) {
 		query: [
 			{l: 'Generic stuff', d: [
 				{l: 'Dedicated', 			t: 'tristate', 	k: 'type', 					tv: '100'},
-				{l: 'Private', 				t: 'checkbox', 	k: 'pass'},
-				{l: 'VAC', 					t: 'checkbox', 	k: 'VAC'},
-				{l: 'Server empty', 		t: 'checkbox', 	k: 'noplayers'},
-				{l: 'Server has players', 	t: 'checkbox', 	k: 'empty'},
-				{l: 'Server not full', 		t: 'checkbox', 	k: 'full'}
+				{l: 'Private', 				t: 'tristate', 	k: 'pass'},
+				{l: 'VAC', 					t: 'tristate', 	k: 'VAC'},
+				{l: 'Server empty', 		t: 'tristate', 	k: 'noplayers'},
+				{l: 'Server has players', 	t: 'tristate', 	k: 'empty'},
+				{l: 'Server not full', 		t: 'tristate', 	k: 'full'}
 				//{l: 'Tags', 				t: 'text', 		k: 'tags'}
 				//{l: 'Whitelisted', 			t: 'checkbox', 	k: 'white'}
 			]},
@@ -165,7 +165,7 @@ app.controller('serverBrowser', function($scope) {
 			]},
 			{l: 'Probably useless', d: [
 				{l: 'Game directory', 		t: 'text', 		k: 'folder'},
-				{l: 'Linux', 				t: 'checkbox', 	k: 'env',					tv: '108'},
+				{l: 'Linux', 				t: 'tristate', 	k: 'env',					tv: '108'},
 				//{l: 'Spectator server', 	t: 'checkbox', 	k: 'proxy'},
 				{l: 'App ID', 				t: 'text', 		k: 'appid', 				n: true},
 				{l: 'Steam ID', 			t: 'text', 		k: 'steamID', 				n: true},
@@ -208,7 +208,7 @@ app.controller('serverBrowser', function($scope) {
 
 				if(typeof(filterVal) == 'string')
 					passed = serverVal.toString().toLowerCase().indexOf(filterVal.toLowerCase()) > -1;
-				else
+				else if(typeof(filterVal) !== 'undefined')
 					passed = serverVal == filterVal;
 
 				if(!passed) {

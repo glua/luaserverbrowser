@@ -180,8 +180,6 @@ lsb.getServers = function(fullRefresh, region, options)
 		lsb.util.fetchServerInfo(lsb.masterList, function(ip, data) 
 			if(data) then
 				if(lsb.data.favorites[ip]) then
-					print(data.name)
-
 					data.favorite = true
 				end
 
