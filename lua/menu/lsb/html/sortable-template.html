@@ -1,0 +1,22 @@
+<table class="sortable">
+	<thead>
+		<tr>
+			<td ng-repeat="col in keys"
+				ng-bind="col"
+				ng-click="sortBy(col)"
+				ng-class="{active: (key === col), reversed: reverse}">
+			</td>
+		</tr>
+	</thead>
+	<tbody>
+		<tr ng-repeat="row in data"
+			ng-hide="filter({'$index': row._index})"
+			ng-click="click({'$index': row._index})"
+			ng-dblclick="dblClick({'$index': row._index})">
+			<td ng-repeat="col in keys"
+				ng-bind="row[col]"
+				ng-class="{truthy: !!row[col]}">
+			</td>
+		</tr>
+	</tbody>
+</table>

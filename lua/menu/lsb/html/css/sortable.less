@@ -1,0 +1,81 @@
+//variables
+@linkColor: #07f;
+
+.arrow {
+	width:0;
+	height:0;
+	
+	border-right: 5px solid transparent;
+	border-left: 5px solid transparent;
+}
+
+.dnArrow(@color) {
+	.arrow;
+	
+	border-top: 5px solid @color;
+}
+
+.upArrow(@color) {
+	.arrow;
+	
+	border-bottom: 5px solid @color;
+}
+
+sortable {
+	display:table;
+	
+	table {
+		width:100%;
+		table-layout:fixed;
+	}
+
+	thead, tbody {
+		float:left;
+		width:100%;
+	}
+	
+	tr {
+		display:table;
+		width:100%;
+	}
+	
+	td {
+		overflow:hidden;
+		text-overflow:ellipsis;
+		white-space:nowrap;
+		max-width:0;
+	}
+	
+	thead {
+		box-sizing:border-box;
+		padding-right:8px;
+		color:@linkColor;
+		font-weight:bold;
+		text-align:center;
+		text-transform:capitalize;
+		cursor:pointer;
+	}
+	
+	thead td.active:after {
+		display:inline-block;
+		position:relative;
+		content:"";
+		margin-left:10px;
+		vertical-align:middle;
+		top:-2px;
+	}
+	
+	thead td.active:not(.reversed):after {
+		.upArrow(@linkColor);
+	}
+	
+	thead td.active.reversed:after {
+		.dnArrow(@linkColor);
+	}
+	
+	tbody {
+		overflow-y:scroll;
+		height:100%;
+		border-top:1px solid #ddd;
+	}
+}
