@@ -198,8 +198,6 @@ lsb.getServers = function(fullRefresh, region, options)
 
 			time = math.huge
 
-			options.refreshType = false
-
 			--try again for a THIRD time
 			--lsb.getServers(region, options)
 		end)
