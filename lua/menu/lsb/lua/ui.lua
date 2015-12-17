@@ -35,7 +35,11 @@ local functions = {
 	end,
 
 	joinServer = function(ip, port)
-		JoinServer( ip .. ":" .. port )
+		RawConsoleCommand(string.format(
+			"connect %s:%s",
+			ip,
+			port
+		))
 	end,
 
 	favoriteServer = function(fullip, fave)
