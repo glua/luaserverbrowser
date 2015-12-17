@@ -35,8 +35,8 @@ local functions = {
 	end,
 
 	joinServer = function(ip, port)
-		RawConsoleCommand(string.format(
-			"connect %s:%s",
+		JoinServer(string.format(
+			"%s:%s",
 			ip,
 			port
 		))
